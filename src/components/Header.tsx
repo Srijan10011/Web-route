@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, User, ShoppingCart } from 'lucide-react';
+import { Leaf, User, ShoppingCart, Wifi, WifiOff } from 'lucide-react';
 
-import { supabase } from '../lib/supabaseClient';
+import { supabase, checkConnection } from '../lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ interface HeaderProps {
 
 export default function Header({ currentPage = 'home', setCurrentPage, setModal, session, cart }: HeaderProps) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
     async function checkAdminStatus() {
@@ -37,6 +38,28 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
 
     checkAdminStatus();
   }, [session]);
+
+  // Check connection status periodically
+  useEffect(() => {
+    const checkConnectionStatus = async () => {
+      try {
+        const { isConnected: connected } = await checkConnection();
+        setIsConnected(connected);
+      } catch (error) {
+        console.error('Connection check failed:', error);
+        setIsConnected(false);
+      }
+    };
+
+    // Check immediately
+    checkConnectionStatus();
+
+    // Check every 30 seconds
+    const interval = setInterval(checkConnectionStatus, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -96,6 +119,15 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Connection Status Indicator */}
+            <div className="flex items-center space-x-1">
+              {isConnected ? (
+                <Wifi className="h-4 w-4 text-green-600" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-600" />
+              )}
+            </div>
+            
             {session ? (
               <>
                 {setCurrentPage && (

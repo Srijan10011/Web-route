@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, Star, X } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { Search, Filter, Star, X, RefreshCw } from 'lucide-react';
+import { supabase, retryOperation } from '../lib/supabaseClient';
 
 interface Product {
   id: number;
@@ -93,24 +93,31 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
+  const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await retryOperation(async () => {
         const { data, error } = await supabase.from('products').select('*');
         if (error) {
           console.error("Supabase fetch error:", error);
           throw error;
         }
-        console.log("Data fetched from Supabase:", data);
-        setProducts(data as Product[]);
-      } catch (err: any) {
-        console.error("Error setting products:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+        return data;
+      });
 
+      console.log("Data fetched from Supabase:", data);
+      setProducts(data as Product[]);
+    } catch (err: any) {
+      console.error("Error setting products:", err);
+      setError(err.message || 'Failed to fetch products. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, []);
 
@@ -325,8 +332,20 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <p className="text-red-600 text-lg">Error: {error}</p>
-            <p className="text-gray-600">Please try again later.</p>
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="h-12 w-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Failed to load products</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={fetchProducts}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto"
+            >
+              <RefreshCw className="h-5 w-5" />
+              <span>Retry</span>
+            </button>
           </div>
         ) : filteredAndSortedProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">

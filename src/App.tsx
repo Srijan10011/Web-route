@@ -17,12 +17,20 @@ import Profile from './components/Profile';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import AdminPage from './components/AdminPage';
-import { supabase } from './lib/supabaseClient';
+import { supabase, checkConnection } from './lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from './components/ui/toaster';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -30,6 +38,8 @@ function App() {
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [cart, setCart] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const addToCart = (product: any) => {
     const existingProduct = cart.find(item => item.id === product.id);
@@ -56,45 +66,141 @@ function App() {
     setCart(cart.filter(item => item.id !== productId));
   };
 
+  // Check database connection health
+  const checkDatabaseConnection = async () => {
+    try {
+      const { isConnected, error } = await checkConnection();
+      if (!isConnected) {
+        console.error('Database connection failed:', error);
+        setConnectionError('Unable to connect to database. Please check your connection and try again.');
+      } else {
+        setConnectionError(null);
+      }
+    } catch (err) {
+      console.error('Connection check failed:', err);
+      setConnectionError('Database connection error. Please refresh the page.');
+    }
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
+    const initializeApp = async () => {
+      try {
+        // Check database connection first
+        await checkDatabaseConnection();
 
-      // Check if user is logged in and if they have a profile
-      if (session?.user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
+        // Get initial session
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting initial session:', sessionError);
+        } else if (mounted) {
+          setSession(initialSession);
+        }
 
-        if (error && error.code === 'PGRST116') { // PGRST116 means no rows found
-          // Profile does not exist, create it
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              email: session.user.email,
-              first_name: '', // Default empty, user can fill later
-              last_name: '',  // Default empty, user can fill later
-              role: 'user',
-            });
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          if (mounted) {
+            setSession(session);
 
-          if (insertError) {
-            console.error('Error creating profile on first login:', insertError);
+            // Check if user is logged in and if they have a profile
+            if (session?.user) {
+              try {
+                const { data: profile, error } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('id', session.user.id)
+                  .single();
+
+                if (error && error.code === 'PGRST116') { // PGRST116 means no rows found
+                  // Profile does not exist, create it
+                  const { error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: session.user.id,
+                      email: session.user.email,
+                      first_name: '', // Default empty, user can fill later
+                      last_name: '',  // Default empty, user can fill later
+                      role: 'user',
+                    });
+
+                  if (insertError) {
+                    console.error('Error creating profile on first login:', insertError);
+                  }
+                } else if (error) {
+                  console.error('Error checking profile on auth state change:', error);
+                }
+              } catch (profileError) {
+                console.error('Error handling profile creation:', profileError);
+              }
+            }
           }
-        } else if (error) {
-          console.error('Error checking profile on auth state change:', error);
+        });
+
+        if (mounted) {
+          setIsLoading(false);
+        }
+
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setConnectionError('Failed to initialize application. Please refresh the page.');
         }
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeApp();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // Retry connection when user clicks retry
+  const handleRetryConnection = async () => {
+    setIsLoading(true);
+    setConnectionError(null);
+    await checkDatabaseConnection();
+    setIsLoading(false);
+  };
+
+  // Show loading or error state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show connection error
+  if (connectionError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Connection Error</h2>
+          <p className="text-gray-600 mb-6">{connectionError}</p>
+          <button
+            onClick={handleRetryConnection}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (currentPage) {

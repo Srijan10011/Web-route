@@ -120,8 +120,8 @@ function App() {
                     .insert({
                       id: session.user.id,
                       email: session.user.email,
-                      first_name: '', // Default empty, user can fill later
-                      last_name: '',  // Default empty, user can fill later
+                      first_name: session.user.user_metadata.first_name || '',
+                      last_name: session.user.user_metadata.last_name || '',
                       role: 'user',
                     });
 

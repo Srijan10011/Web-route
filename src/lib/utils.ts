@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import React from "react"
+import React, { useState, useEffect } from "react"
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from './supabaseClient';
  
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -59,4 +61,256 @@ export const debounce = <T extends (...args: any[]) => any>(
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
+};
+
+// Custom hook for handling data refetching when tab becomes visible
+export const useVisibilityRefetch = (
+  refetchFn: () => void,
+  shouldRefetch: boolean = true,
+  dependencies: any[] = []
+) => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const wasVisible = isVisible;
+      const isNowVisible = !document.hidden;
+      setIsVisible(isNowVisible);
+
+      // If tab just became visible and we should refetch, do it
+      if (!wasVisible && isNowVisible && shouldRefetch) {
+        console.log('Tab became visible, re-fetching data...');
+        refetchFn();
+      }
+    };
+
+    const handleFocus = () => {
+      if (shouldRefetch) {
+        console.log('Window focused, re-fetching data...');
+        refetchFn();
+      }
+    };
+
+    const handleOnline = () => {
+      if (shouldRefetch) {
+        console.log('Network came online, re-fetching data...');
+        refetchFn();
+      }
+    };
+
+    // Set initial visibility state
+    setIsVisible(!document.hidden);
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [refetchFn, shouldRefetch, isVisible, ...dependencies]);
+
+  return { isVisible };
+};
+
+// React Query hook for products with automatic refetching
+export const useProductsQuery = () => {
+  return useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Enhanced refetch behavior for visibility changes
+    refetchInterval: (query) => {
+      // If we have no data and the query is stale, refetch every 30 seconds
+      if (!query.state.data || query.state.data.length === 0) {
+        return 30000;
+      }
+      return false; // Don't refetch if we have data
+    },
+  });
+};
+
+// React Query hook for a single product
+export const useProductQuery = (productId: number | null) => {
+  return useQuery({
+    queryKey: ['product', productId],
+    queryFn: async () => {
+      if (!productId) throw new Error('No product ID provided');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!productId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for user profile
+export const useProfileQuery = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      if (!userId) throw new Error('No user ID provided');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, role')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for user orders
+export const useUserOrdersQuery = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['userOrders', userId],
+    queryFn: async () => {
+      if (!userId) throw new Error('No user ID provided');
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, order_number, total_amount, status, order_date, items')
+        .eq('user_id', userId)
+        .order('order_date', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for user addresses
+export const useUserAddressesQuery = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['userAddresses', userId],
+    queryFn: async () => {
+      if (!userId) throw new Error('No user ID provided');
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .select('phone, address, city, state, zip_code, latitude, longitude')
+        .eq('user_id', userId)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for admin orders
+export const useAdminOrdersQuery = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['adminOrders'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('orders').select('*');
+      if (error) throw error;
+      return data;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for admin products
+export const useAdminProductsQuery = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['adminProducts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) throw error;
+      return data;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for categories
+export const useCategoriesQuery = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('categories').select('*');
+      if (error) throw error;
+      return data;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
+};
+
+// React Query hook for order tracking
+export const useOrderTrackingQuery = (orderNumber: string | null) => {
+  return useQuery({
+    queryKey: ['orderTracking', orderNumber],
+    queryFn: async () => {
+      if (!orderNumber) throw new Error('No order number provided');
+      const { data, error } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('order_number', orderNumber)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orderNumber,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+    retry: 3,
+  });
 };

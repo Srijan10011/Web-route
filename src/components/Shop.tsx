@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Search, Filter, Star, X, RefreshCw } from 'lucide-react';
-import { supabase, retryOperation } from '../lib/supabaseClient';
+import { useProductsQuery } from '../lib/utils';
 
 interface Product {
   id: number;
@@ -88,43 +88,32 @@ function ProductCard({ product, onProductClick, addToCart }: { product: any; onP
 }
 
 export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }: { setCurrentPage: (page: string) => void; setSelectedProductId: (id: number) => void; addToCart: (product: any) => void }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const data = await retryOperation(async () => {
-        const { data, error } = await supabase.from('products').select('*');
-        if (error) {
-          console.error("Supabase fetch error:", error);
-          throw error;
-        }
-        return data;
-      });
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: products = [], 
+    isLoading: loading, 
+    error, 
+    refetch 
+  } = useProductsQuery();
 
-      console.log("Data fetched from Supabase:", data);
-      setProducts(data as Product[]);
-    } catch (err: any) {
-      console.error("Error setting products:", err);
-      setError(err.message || 'Failed to fetch products. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  // Function to manually refetch data
+  const handleRefetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Log products state after it's updated
-  useEffect(() => {
+  React.useEffect(() => {
     console.log("Current products state:", products);
   }, [products]);
+
+  // Show notification when products are empty after loading
+  React.useEffect(() => {
+    if (!loading && products.length === 0 && !error) {
+      console.log('Products loaded but array is empty - this might indicate a data issue');
+    }
+  }, [loading, products.length, error]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [priceRange, setPriceRange] = useState('all');
@@ -328,7 +317,18 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
 
         {loading ? (
           <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">Loading products...</p>
+            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="h-12 w-12 text-blue-600 animate-spin" />
+            </div>
+            <p className="text-gray-600 text-lg mb-4">Loading products...</p>
+            <p className="text-gray-500 text-sm mb-6">This may take a few moments</p>
+            <button 
+              onClick={handleRefetch}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto"
+            >
+              <RefreshCw className="h-5 w-5" />
+              <span>Retry Loading</span>
+            </button>
           </div>
         ) : error ? (
           <div className="text-center py-16">
@@ -338,9 +338,9 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Failed to load products</h3>
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-red-600 mb-4">{error.message || 'Failed to fetch products. Please try again.'}</p>
             <button 
-              onClick={fetchProducts}
+              onClick={handleRefetch}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto"
             >
               <RefreshCw className="h-5 w-5" />
@@ -365,8 +365,25 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
               No products found
             </h3>
             <p className="text-gray-600 mb-6">
-              Try adjusting your search criteria or browse all products.
+              {products.length === 0 && !loading && !error 
+                ? "It looks like no products are available right now. This might be due to a connection issue or the products haven't loaded yet."
+                : "Try adjusting your search criteria or browse all products."
+              }
             </p>
+            {products.length === 0 && !loading && !error && (
+              <div className="mb-6">
+                <button 
+                  onClick={handleRefetch}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto mb-4"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                  <span>Reload Products</span>
+                </button>
+                <p className="text-sm text-gray-500">
+                  If the problem persists, try refreshing the page or check your internet connection.
+                </p>
+              </div>
+            )}
             <button 
               onClick={clearFilters} 
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"

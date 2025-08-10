@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useToast } from './ui/use-toast';
 import { ShoppingCart, Package, Users, Edit, Eye, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useAdminOrdersQuery, useAdminProductsQuery, useCategoriesQuery } from '../lib/utils';
 
 // Mock API functions (replace with actual API calls)
 // Mock API functions (replace with actual API calls)
@@ -84,36 +85,40 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     checkUserAndRole();
   }, []);
 
-  // Fetch admin data
-  const { data: orders } = useQuery({
-    queryKey: ['adminOrders'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('orders').select('*');
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: orders = [], 
+    isLoading: ordersLoading, 
+    error: ordersError,
+    refetch: refetchOrders 
+  } = useAdminOrdersQuery(isAuthenticated);
 
-  const { data: products } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*');
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
+  const { 
+    data: products = [], 
+    isLoading: productsLoading, 
+    error: productsError,
+    refetch: refetchProducts 
+  } = useAdminProductsQuery(isAuthenticated);
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('categories').select('*');
-      if (error) throw error;
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
+  const { 
+    data: categories = [], 
+    isLoading: categoriesLoading, 
+    error: categoriesError,
+    refetch: refetchCategories 
+  } = useCategoriesQuery(isAuthenticated);
+
+  // Manual refetch functions
+  const handleRefetchOrders = async () => {
+    await refetchOrders();
+  };
+
+  const handleRefetchProducts = async () => {
+    await refetchProducts();
+  };
+
+  const handleRefetchCategories = async () => {
+    await refetchCategories();
+  };
 
   // Product form
   const productForm = useForm<ProductForm>({

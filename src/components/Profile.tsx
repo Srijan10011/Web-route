@@ -1,69 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
+import React, { useState } from 'react';
 import { User, Calendar, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useProfileQuery, useUserOrdersQuery } from '../lib/utils';
 
 interface ProfileProps {
-  session: Session | null;
+  session: any;
 }
 
 export default function Profile({ session }: ProfileProps) {
-  const [profile, setProfile] = useState<{ first_name: string; last_name: string; } | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
-  useEffect(() => {
-    async function getProfile() {
-      if (!session?.user) {
-        setLoadingProfile(false);
-        return;
-      }
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    error: profileError,
+    refetch: refetchProfile 
+  } = useProfileQuery(session?.user?.id);
 
-      setLoadingProfile(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('id', session.user.id)
-        .single();
+  const { 
+    data: orders = [], 
+    isLoading: ordersLoading, 
+    error: ordersError,
+    refetch: refetchOrders 
+  } = useUserOrdersQuery(session?.user?.id);
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setProfile(null);
-      } else if (data) {
-        setProfile(data);
-      }
-      setLoadingProfile(false);
-    }
+  // Manual refetch functions
+  const handleRefetchProfile = async () => {
+    setLoadingProfile(true);
+    await refetchProfile();
+    setLoadingProfile(false);
+  };
 
-    getProfile();
-  }, [session]);
-
-  useEffect(() => {
-    async function getUserOrders() {
-      if (!session?.user) {
-        setLoadingOrders(false);
-        return;
-      }
-
-      setLoadingOrders(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, order_number, total_amount, status, order_date, items')
-        .eq('user_id', session.user.id)
-        .order('order_date', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching user orders:', error);
-        setOrders([]);
-      } else if (data) {
-        setOrders(data);
-      }
-      setLoadingOrders(false);
-    }
-
-    getUserOrders();
-  }, [session]);
+  const handleRefetchOrders = async () => {
+    setLoadingOrders(true);
+    await refetchOrders();
+    setLoadingOrders(false);
+  };
 
   if (!session) {
     return (
@@ -88,8 +62,24 @@ export default function Profile({ session }: ProfileProps) {
               <User className="h-12 w-12 text-green-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
-            {loadingProfile ? (
-              <p className="text-gray-600">Loading profile...</p>
+            {profileLoading ? (
+              <div className="text-center">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-gray-600">Loading profile...</p>
+              </div>
+            ) : profileError ? (
+              <div className="text-center">
+                <p className="text-red-600 mb-2">Failed to load profile</p>
+                <button
+                  onClick={handleRefetchProfile}
+                  disabled={loadingProfile}
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  {loadingProfile ? 'Retrying...' : 'Retry'}
+                </button>
+              </div>
             ) : profile ? (
               <p className="text-gray-600">Welcome, {profile.first_name} {profile.last_name}!</p>
             ) : (
@@ -103,7 +93,7 @@ export default function Profile({ session }: ProfileProps) {
               <div>
                 <p className="text-sm font-medium text-gray-500">Full Name</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {loadingProfile ? 'Loading...' : profile ? `${profile.first_name} ${profile.last_name}` : 'N/A'}
+                  {profileLoading ? 'Loading...' : profile ? `${profile.first_name} ${profile.last_name}` : 'N/A'}
                 </p>
               </div>
             </div>
@@ -125,9 +115,24 @@ export default function Profile({ session }: ProfileProps) {
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Order History</h2>
-            {loadingOrders ? (
+            {ordersLoading ? (
               <div className="bg-gray-50 p-6 rounded-lg text-center">
-                <p className="text-gray-600">Loading orders...</p>
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-gray-600 mb-4">Loading orders...</p>
+                <p className="text-gray-500 text-sm">This may take a few moments</p>
+              </div>
+            ) : ordersError ? (
+              <div className="bg-gray-50 p-6 rounded-lg text-center">
+                <p className="text-red-600 mb-4">Failed to load orders</p>
+                <button
+                  onClick={handleRefetchOrders}
+                  disabled={loadingOrders}
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  {loadingOrders ? 'Retrying...' : 'Retry Loading Orders'}
+                </button>
               </div>
             ) : orders.length === 0 ? (
               <div className="bg-gray-50 p-6 rounded-lg text-center">

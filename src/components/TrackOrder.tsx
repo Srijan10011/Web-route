@@ -1,39 +1,63 @@
 import React, { useState } from 'react';
-import { PackageSearch } from 'lucide-react';
+import { PackageSearch, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useOrderTrackingQuery } from '../lib/utils';
 
 export default function TrackOrder() {
   const [orderId, setOrderId] = useState('');
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isTracking, setIsTracking] = useState(false);
+
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: order, 
+    isLoading: orderLoading, 
+    error: orderError,
+    refetch: refetchOrder 
+  } = useOrderTrackingQuery(orderId);
 
   const handleTrackOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setOrderStatus(null);
     setErrorMessage(null);
+    setIsTracking(true);
 
     if (!orderId) {
       setErrorMessage('Please enter an Order ID.');
+      setIsTracking(false);
       return;
     }
 
-    const { data: order, error } = await supabase
-      .from('orders')
-      .select('status')
-      .eq('order_number', orderId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') { // No rows found
-        setErrorMessage('Order ID not found. Please check your ID and try again.');
-      } else {
-        console.error('Error tracking order:', error);
-        setErrorMessage('An error occurred while tracking your order. Please try again later.');
-      }
-    } else if (order) {
-      setOrderStatus(`Your order status is: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`);
+    try {
+      await refetchOrder();
+    } catch (error) {
+      console.error('Error tracking order:', error);
+      setErrorMessage('An error occurred while tracking your order. Please try again later.');
+    } finally {
+      setIsTracking(false);
     }
   };
+
+  // Update order status when data changes
+  React.useEffect(() => {
+    if (order) {
+      setOrderStatus(`Your order status is: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`);
+      setErrorMessage(null);
+    }
+  }, [order]);
+
+  // Handle errors
+  React.useEffect(() => {
+    if (orderError) {
+      if (orderError.message?.includes('PGRST116') || orderError.message?.includes('No rows found')) {
+        setErrorMessage('Order ID not found. Please check your ID and try again.');
+      } else {
+        setErrorMessage('An error occurred while tracking your order. Please try again later.');
+      }
+      setOrderStatus(null);
+    }
+  }, [orderError]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

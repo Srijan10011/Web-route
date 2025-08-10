@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useProfileQuery, useUserAddressesQuery } from '../lib/utils';
 
 interface CheckoutProps {
   cart: any[];
   setCurrentPage: (page: string) => void;
+  session: any;
+  setCart: (cart: any[]) => void;
 }
 
-export default function Checkout({ cart, setCurrentPage }: CheckoutProps) {
+interface GuestSession {
+  orderId: string;
+  orderNumber: string;
+  customerEmail: string;
+  customerName: string;
+  expiresAt: number;
+  orderData: any;
+}
+
+export default function Checkout({ cart, setCurrentPage, session, setCart }: CheckoutProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -14,52 +26,71 @@ export default function Checkout({ cart, setCurrentPage }: CheckoutProps) {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
   const [location, setLocation] = useState<string | null>(null);
 
+  // Get current user
+  const [user, setUser] = useState<any>(null);
+
   useEffect(() => {
-    async function fetchUserData() {
+    async function getCurrentUser() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Fetch profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, email')
-          .eq('id', user.id)
-          .single();
+      setUser(user);
+    }
+    getCurrentUser();
+  }, []);
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else if (profileData) {
-          setFirstName(profileData.first_name || '');
-          setLastName(profileData.last_name || '');
-          setEmail(profileData.email || '');
-        }
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    error: profileError,
+    refetch: refetchProfile 
+  } = useProfileQuery(user?.id);
 
-        // Fetch address data
-        const { data: addressData, error: addressError } = await supabase
-          .from('user_addresses')
-          .select('phone, address, city, state, zip_code, latitude, longitude')
-          .eq('user_id', user.id)
-          .single();
+  const { 
+    data: addressData, 
+    isLoading: addressLoading, 
+    error: addressError,
+    refetch: refetchAddress 
+  } = useUserAddressesQuery(user?.id);
 
-        if (addressError && addressError.code !== 'PGRST116') { // PGRST116 means no rows found
-          console.error('Error fetching address:', addressError);
-        } else if (addressData) {
-          setPhone(addressData.phone || '');
-          setAddress(addressData.address || '');
-          setCity(addressData.city || '');
-          setState(addressData.state || '');
-          setZipCode(addressData.zip_code || '');
-          if (addressData.latitude && addressData.longitude) {
-            setLocation(`${addressData.latitude}, ${addressData.longitude}`);
-          }
-        }
+  // Manual refetch functions
+  const handleRefetchProfile = async () => {
+    await refetchProfile();
+  };
+
+  const handleRefetchAddress = async () => {
+    await refetchAddress();
+  };
+
+  // Get email directly from user object like profile does
+  const userEmail = user?.email || '';
+
+  // Then in your useEffect, prioritize profile data but fall back to user data
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || '');
+      setLastName(profile.last_name || '');
+      setEmail(profile.email || '');
+    } else if (session?.user) {
+      // Fallback to session user data
+      setFirstName(session.user.user_metadata?.first_name || '');
+      setLastName(session.user.user_metadata?.last_name || '');
+      setEmail(session.user.email || '');
+    }
+  }, [profile, session]);
+
+  useEffect(() => {
+    if (addressData) {
+      setPhone(addressData.phone || '');
+      setAddress(addressData.address || '');
+      setCity(addressData.city || '');
+      setState(addressData.state || '');
+      if (addressData.latitude && addressData.longitude) {
+        setLocation(`${addressData.latitude}, ${addressData.longitude}`);
       }
     }
-
-    fetchUserData();
-  }, []);
+  }, [addressData]);
 
   const getLocation = () => {
     if (navigator.geolocation) {
@@ -72,82 +103,193 @@ export default function Checkout({ cart, setCurrentPage }: CheckoutProps) {
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handlePlaceOrder = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('You must be logged in to place an order.');
-      return;
-    }
+    console.log('=== BUTTON CLICKED ===');
+    console.log('User state:', user);
+    console.log('Session state:', session);
+    
+    try {
+      console.log('=== ORDER PLACEMENT STARTED ===');
+      console.log('Cart items:', cart);
+      console.log('Form data:', { firstName, lastName, email, phone, address, city, state, location });
+      
+      // Step 1: Get user (optional for guest checkout)
+      console.log('Step 1: Getting user...');
+      let user = null;
+      try {
+        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.log('User not authenticated, proceeding as guest checkout');
+        } else if (authUser) {
+          user = authUser;
+          console.log('✓ User authenticated:', user.id);
+        } else {
+          console.log('✓ User not authenticated, proceeding as guest.');
+        }
+      } catch (error) {
+        console.log('Authentication check failed, proceeding as guest checkout');
+      }
 
-    // Enforce location selection
-    if (!location) {
-      alert('Please click "Use my location" to proceed with the order.');
-      return;
-    }
+      // Step 2: Validate location
+      console.log('Step 2: Validating location...');
+      if (!location) {
+        alert('Please click "Use my location" to proceed with the order.');
+        return;
+      }
+      console.log('✓ Location validated:', location);
 
-    // NEW: Check if location is set
-    if (!location) {
-      alert('Please click "Use my location" to proceed with the order.');
-      return;
-    }
+      // Step 3: Validate required fields
+      console.log('Step 3: Validating required fields...');
+      if (!firstName || !lastName || !email || !phone || !address || !city || !state) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      console.log('✓ All required fields validated');
 
-    const shippingAddress = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      zipCode,
-      latitude: location ? parseFloat(location.split(', ')[0]) : null,
-      longitude: location ? parseFloat(location.split(', ')[1]) : null,
-    };
-
-    // Upsert user address
-    const { error: upsertError } = await supabase
-      .from('user_addresses')
-      .upsert({
-        user_id: user.id,
+      const shippingAddress = {
+        firstName,
+        lastName,
+        email,
         phone,
         address,
         city,
         state,
-        zip_code: zipCode,
-        latitude: shippingAddress.latitude,
-        longitude: shippingAddress.longitude,
-      }, { onConflict: 'user_id' });
+        zipCode: '',
+        latitude: location ? parseFloat(location.split(', ')[0]) : null,
+        longitude: location ? parseFloat(location.split(', ')[1]) : null,
+      };
+      console.log('Shipping address prepared:', shippingAddress);
 
-    if (upsertError) {
-      console.error('Error saving address:', upsertError);
-      alert('Failed to save address. Please try again.');
-      return;
-    }
+      // Step 4: Save user address if user is authenticated
+      if (user) {
+        console.log('Step 4: Saving user address...');
+        const { error: upsertError } = await supabase
+          .from('user_addresses')
+          .upsert({
+            user_id: user.id,
+            phone,
+            address,
+            city,
+            state,
+            zip_code: '',
+            latitude: shippingAddress.latitude,
+            longitude: shippingAddress.longitude,
+          }, { onConflict: 'user_id' });
 
-    const orderData = {
-      order_number: `ORD-${Date.now()}`, // Simple unique order number
-      customer_name: `${firstName} ${lastName}`,
-      total_amount: totalPrice + 5.99, // Assuming 5.99 is shipping cost
-      status: 'pending',
-      shipping_address: shippingAddress,
-      items: cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      user_id: user.id,
-    };
+        if (upsertError) {
+          console.error('❌ Address save failed:', upsertError);
+          alert(`Failed to save address: ${upsertError.message}`);
+          return;
+        }
+        console.log('✓ Address saved successfully');
+      }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData]);
+      // Step 5: Prepare order data
+      console.log('Step 5: Preparing order data...');
+      const orderData = {
+        order_number: `ORD-${Date.now()}`,
+        customer_name: `${firstName} ${lastName}`,
+        total_amount: totalPrice + 5.99,
+        status: 'pending',
+        shipping_address: shippingAddress,
+        items: JSON.stringify(cart.map(item => ({ // Convert to JSON string
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        }))),
+        user_id: user ? user.id : null,
+        // Removed customer_email and created_at since they don't exist in orders table
+      };
+      console.log('Order data prepared:', orderData);
 
-    if (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
-    } else {
-      alert('Order placed successfully!');
+      // Step 6: Insert order
+      console.log('Step 6: Inserting order into database...');
+      console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
+
+      // First, let's validate the data before sending
+      if (!orderData.order_number || !orderData.customer_name || !orderData.total_amount) {
+        console.error('❌ Missing required fields:', orderData);
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select(); // Add .select() to return the inserted data
+
+      console.log('Insert response - data:', data);
+      console.log('Insert response - error:', error);
+
+      if (error) {
+        console.error('❌ Order insert failed:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        alert(`Failed to place order: ${error.message}`);
+        return;
+      }
+
+      // Check if data was returned
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.error('❌ Order insert succeeded but returned no data');
+        console.error('Data received:', data);
+        
+        // Try to fetch the order to see if it was actually created
+        const { data: fetchedOrder, error: fetchError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('order_number', orderData.order_number)
+          .single();
+          
+        if (fetchError || !fetchedOrder) {
+          console.error('❌ Order was not created in database');
+          alert('Failed to create order. Please try again.');
+          return;
+        } else {
+          console.log('✓ Order found in database:', fetchedOrder);
+          // Use the fetched order data
+          data = [fetchedOrder];
+        }
+      }
+
+      console.log('✓ Order placed successfully:', data);
+      
+      // Create guest session if user is not authenticated
+      if (!user) {
+        const guestSession: GuestSession = {
+          orderId: data[0].id,
+          orderNumber: orderData.order_number,
+          customerEmail: email,
+          customerName: `${firstName} ${lastName}`,
+          expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours from now
+          orderData: {
+            ...orderData,
+            id: data[0].id
+          }
+        };
+        
+        // Store multiple orders in localStorage
+        const existingSessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
+        existingSessions.push(guestSession);
+        localStorage.setItem('guestSessions', JSON.stringify(existingSessions));
+        
+        // Show success message with session info
+        alert(`Order placed successfully! Order #${orderData.order_number}. You can access your order details for the next 24 hours.`);
+      } else {
+        alert('Order placed successfully!');
+      }
+      
+      setCart([]);
       setCurrentPage('home');
+      
+    } catch (error: any) {
+      console.error('❌ UNEXPECTED ERROR:', error);
+      console.error('Error stack:', error.stack);
+      alert(`An unexpected error occurred: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -167,15 +309,15 @@ export default function Checkout({ cart, setCurrentPage }: CheckoutProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">First Name</label>
-                  <input type="text" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={firstName} onChange={(e) => setFirstName(e.target.value)} readOnly />
+                  <input type="text" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                  <input type="text" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={lastName} onChange={(e) => setLastName(e.target.value)} readOnly />
+                  <input type="text" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input type="email" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={email} onChange={(e) => setEmail(e.target.value)} readOnly />
+                  <input type="email" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="md:col-span-2 relative">
                   <label className="block text-sm font-medium text-gray-700">Phone</label>

@@ -1,38 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Star, ShoppingCart, RefreshCw } from 'lucide-react';
 import { supabase, retryOperation } from '../lib/supabaseClient';
+import { useProductQuery } from '../lib/utils';
+import { Star, ShoppingCart, Heart, Share2, ArrowLeft, MapPin } from 'lucide-react';
 
 interface Product {
   id: number;
   name: string;
   description: string;
   price: number;
-  rating: number;
-  reviews: number;
-  image: string;
+  image_url: string;
   category: string;
-  badge: string | null;
-  badgeColor: string | null;
-  details?: string[];
+  rating: number;
+  stock: number;
+  location: string;
 }
 
-function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
-  return (
-    <div className="flex items-center space-x-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-5 w-5 ${
-              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-sm text-gray-600">({rating}) {reviews} reviews</span>
-    </div>
-  );
-}
+
 
 interface ProductDetailProps {
   productId: number | null;
@@ -41,35 +24,23 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ productId, setCurrentPage, addToCart }: ProductDetailProps) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProduct = async () => {
-    if (productId === null) {
-      setLoading(false);
-      setError("No product ID provided.");
-      return;
-    }
-    
+  // Use React Query for data fetching with automatic refetching
+  const { 
+    data: product, 
+    isLoading: productLoading, 
+    error: productError,
+    refetch: refetchProduct 
+  } = useProductQuery(productId);
+
+  // Manual refetch function
+  const handleRefetch = async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      const data = await retryOperation(async () => {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('id', productId)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-        return data;
-      });
-
-      setProduct(data as Product);
+      await refetchProduct();
     } catch (err: any) {
       setError(err.message || 'Failed to fetch product details. Please try again.');
     } finally {
@@ -77,47 +48,33 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
     }
   };
 
-  useEffect(() => {
-    fetchProduct();
-  }, [productId]);
-
-  if (loading) {
+  if (productLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading product details...</p>
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600 text-lg mb-4">Loading product details...</p>
+          <p className="text-gray-500 text-sm">This may take a few moments</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (productError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Product</h2>
-          <p className="text-red-600 mb-6">{error}</p>
-          <div className="flex space-x-4 justify-center">
-            <button
-              onClick={fetchProduct}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>Retry</span>
-            </button>
-            <button
-              onClick={() => setCurrentPage('shop')}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-            >
-              Back to Shop
-            </button>
-          </div>
+        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+          <p className="text-red-600 text-lg mb-4">Failed to load product details</p>
+          <p className="text-gray-600 mb-6">{productError.message || 'An error occurred while loading the product.'}</p>
+          <button
+            onClick={handleRefetch}
+            disabled={loading}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            {loading ? 'Retrying...' : 'Retry Loading'}
+          </button>
         </div>
       </div>
     );
@@ -127,11 +84,10 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
-          <p className="text-gray-600 mb-6">The product you are looking for does not exist or is unavailable.</p>
+          <p className="text-gray-600 text-lg">Product not found</p>
           <button
             onClick={() => setCurrentPage('shop')}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mt-4"
           >
             Back to Shop
           </button>
@@ -153,7 +109,7 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden lg:flex">
           <div className="lg:w-1/2">
             <img
-              src={product.image}
+              src={product.image_url}
               alt={product.name}
               className="w-full h-96 object-cover"
             />
@@ -161,12 +117,17 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
           <div className="lg:w-1/2 p-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">{product.name}</h1>
             <div className="flex items-center mb-4">
-              <StarRating rating={product.rating} reviews={product.reviews} />
-              {product.badge && (
-                <span className={`ml-4 ${product.badgeColor} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
-                  {product.badge}
-                </span>
-              )}
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-5 w-5 ${
+                      i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-gray-600 text-sm">({product.rating}/5)</span>
+              </div>
             </div>
             <p className="text-gray-700 text-lg mb-6 leading-relaxed">{product.description}</p>
             <p className="text-green-600 text-3xl font-bold mb-6">${product.price}</p>
@@ -174,9 +135,9 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Product Details</h3>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                {product.details?.map((detail, index) => (
-                  <li key={index}>{detail}</li>
-                ))}
+                <li>Category: {product.category}</li>
+                <li>Stock: {product.stock} units available</li>
+                <li>Location: {product.location}</li>
               </ul>
             </div>
 

@@ -21,6 +21,7 @@ import { supabase, checkConnection } from './lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from './components/ui/toaster';
+import GuestOrderAccess from './components/GuestOrderAccess';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,9 @@ const queryClient = new QueryClient({
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true,
     },
   },
 });
@@ -264,7 +268,7 @@ function App() {
         return (
           <div>
             <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
-            <Checkout cart={cart} setCurrentPage={setCurrentPage} />
+            <Checkout cart={cart} setCurrentPage={setCurrentPage} session={session} setCart={setCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
         );
@@ -275,6 +279,10 @@ function App() {
             <AdminPage setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
+        );
+      case 'guestOrder':
+        return (
+          <GuestOrderAccess setCurrentPage={setCurrentPage} />
         );
       case 'home':
       default:

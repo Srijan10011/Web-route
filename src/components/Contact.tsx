@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useMutation } from '@tanstack/react-query';
 
 export default function Contact() {
   const [name, setName] = useState('');
@@ -8,6 +9,30 @@ export default function Contact() {
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Use React Query mutation for contact form submission
+  const contactMutation = useMutation({
+    mutationFn: async (formData: { name: string; email: string; message: string }) => {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([formData]);
+      
+      if (error) throw error;
+      return { success: true };
+    },
+    onSuccess: () => {
+      setSuccessMessage('Your message has been sent successfully!');
+      setName('');
+      setEmail('');
+      setMessage('');
+      setErrorMessage('');
+    },
+    onError: (error: any) => {
+      console.error('Error sending message:', error);
+      setErrorMessage('Failed to send message. Please try again.');
+      setSuccessMessage('');
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,21 +49,7 @@ export default function Contact() {
       return;
     }
 
-    const { error } = await supabase
-      .from('contact_messages')
-      .insert([
-        { name, email, message }
-      ]);
-
-    if (error) {
-      console.error('Error sending message:', error);
-      setErrorMessage('Failed to send message. Please try again.');
-    } else {
-      setSuccessMessage('Your message has been sent successfully!');
-      setName('');
-      setEmail('');
-      setMessage('');
-    }
+    contactMutation.mutate({ name, email, message });
   };
 
   return (
@@ -84,8 +95,22 @@ export default function Contact() {
                 {successMessage && (
                   <p className="text-green-600 text-sm mb-4">{successMessage}</p>
                 )}
-                <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                  Send Message
+                <button 
+                  type="submit" 
+                  disabled={contactMutation.isPending}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                >
+                  {contactMutation.isPending ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      <span>Send Message</span>
+                    </>
+                  )}
                 </button>
               </form>
             </div>

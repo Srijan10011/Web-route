@@ -1,43 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Leaf, User, ShoppingCart, Wifi, WifiOff } from 'lucide-react';
-
 import { supabase, checkConnection } from '../lib/supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import { useProfileQuery } from '../lib/utils';
+import { ShoppingCart, User, Menu, X, Wifi, WifiOff, Leaf } from 'lucide-react';
 
 interface HeaderProps {
   currentPage?: string;
-  setCurrentPage?: (page: string) => void;
+  setCurrentPage: (page: string) => void;
   setModal: (modal: 'login' | 'signup' | null) => void;
-  session: Session | null;
+  session: any;
   cart: any[];
 }
 
 export default function Header({ currentPage = 'home', setCurrentPage, setModal, session, cart }: HeaderProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Use React Query for admin status with automatic refetching
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    error: profileError,
+    refetch: refetchProfile 
+  } = useProfileQuery(session?.user?.id);
+
+  // Update admin status when profile changes
   useEffect(() => {
-    async function checkAdminStatus() {
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user role:', error);
-          setIsAdmin(false);
-        } else if (data) {
-          setIsAdmin(data.role === 'admin');
-        }
-      } else {
-        setIsAdmin(false);
-      }
+    if (profile) {
+      setIsAdmin(profile.role === 'admin');
+    } else {
+      setIsAdmin(false);
     }
-
-    checkAdminStatus();
-  }, [session]);
+  }, [profile]);
 
   // Check connection status periodically
   useEffect(() => {
@@ -65,6 +59,16 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
     if (error) {
       console.error("Error logging out:", error.message);
     }
+  };
+
+  // Add this function to check for guest session
+  const hasGuestSession = () => {
+    const sessionData = localStorage.getItem('guestSession');
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      return Date.now() < session.expiresAt;
+    }
+    return false;
   };
 
   return (
@@ -183,6 +187,14 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                   )}
                 </button>
               </>
+            )}
+            {!session && hasGuestSession() && (
+              <button
+                onClick={() => setCurrentPage('guestOrder')}
+                className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                My Order
+              </button>
             )}
           </div>
         </div>

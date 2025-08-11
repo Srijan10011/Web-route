@@ -63,10 +63,14 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
 
   // Add this function to check for guest session
   const hasGuestSession = () => {
-    const sessionData = localStorage.getItem('guestSession');
-    if (sessionData) {
-      const session = JSON.parse(sessionData);
-      return Date.now() < session.expiresAt;
+    const sessionsData = localStorage.getItem('guestSessions');
+    if (sessionsData) {
+      const sessions = JSON.parse(sessionsData);
+      // Check if any session is still valid
+      const validSessions = sessions.filter((session: any) => 
+        session.expiresAt > Date.now()
+      );
+      return validSessions.length > 0;
     }
     return false;
   };
@@ -120,6 +124,20 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -198,6 +216,72 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
             )}
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+              <button 
+                onClick={() => {
+                  setCurrentPage?.('home');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`${currentPage === 'home' ? 'text-green-600' : 'text-gray-600'} hover:text-green-700 block px-3 py-2 text-base font-medium transition-colors`}
+              >
+                Home
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentPage?.('shop');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`${currentPage === 'shop' ? 'text-green-600' : 'text-gray-600'} hover:text-green-700 block px-3 py-2 text-base font-medium transition-colors`}
+              >
+                Shop
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentPage?.('about');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`${currentPage === 'about' ? 'text-green-600' : 'text-gray-600'} hover:text-green-700 block px-3 py-2 text-base font-medium transition-colors`}
+              >
+                About
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentPage?.('contact');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`${currentPage === 'contact' ? 'text-green-600' : 'text-gray-600'} hover:text-green-700 block px-3 py-2 text-base font-medium transition-colors`}
+              >
+                Contact
+              </button>
+              {session && isAdmin && (
+                <button 
+                  onClick={() => {
+                    setCurrentPage?.('admin');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`${currentPage === 'admin' ? 'text-green-600' : 'text-gray-600'} hover:text-green-700 block px-3 py-2 text-base font-medium transition-colors`}
+                >
+                  Admin
+                </button>
+              )}
+              {!session && hasGuestSession() && (
+                <button
+                  onClick={() => {
+                    setCurrentPage('guestOrder');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-gray-700 hover:text-orange-600 block px-3 py-2 text-base font-medium transition-colors"
+                >
+                  My Order
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
     </header>
   );

@@ -282,7 +282,11 @@ function App() {
         );
       case 'guestOrder':
         return (
-          <GuestOrderAccess setCurrentPage={setCurrentPage} />
+          <div>
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <GuestOrderAccess setCurrentPage={setCurrentPage} />
+            <Footer setCurrentPage={setCurrentPage} />
+          </div>
         );
       case 'home':
       default:

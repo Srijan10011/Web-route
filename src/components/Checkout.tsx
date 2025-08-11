@@ -191,12 +191,12 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
         total_amount: totalPrice + 5.99,
         status: 'pending',
         shipping_address: shippingAddress,
-        items: JSON.stringify(cart.map(item => ({ // Convert to JSON string
+        items: cart.map(item => ({ // JSONB column automatically handles the conversion
           id: item.id,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-        }))),
+        })),
         user_id: user ? user.id : null,
         // Removed customer_email and created_at since they don't exist in orders table
       };

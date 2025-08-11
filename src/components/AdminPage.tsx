@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { useToast } from './ui/use-toast';
 import { ShoppingCart, Package, Users, Edit, Eye, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { useAdminOrdersQuery, useAdminProductsQuery, useCategoriesQuery } from '../lib/utils';
+import { useAdminOrdersQuery, useAdminProductsQuery, useCategoriesQuery, AdminOrder } from '../lib/utils';
 
 // Mock API functions (replace with actual API calls)
 // Mock API functions (replace with actual API calls)
@@ -60,26 +60,33 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
   useEffect(() => {
     async function checkUserAndRole() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setIsAuthenticated(true);
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsAuthenticated(true);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
 
-        if (profileError) {
-          console.error('Error fetching user role:', profileError);
+          if (profileError) {
+            console.error('Error fetching user role:', profileError);
+            setUserRole(null);
+          } else if (profileData) {
+            setUserRole(profileData.role);
+          }
+        } else {
+          setIsAuthenticated(false);
           setUserRole(null);
-        } else if (profileData) {
-          setUserRole(profileData.role);
         }
-      } else {
+      } catch (error) {
+        console.error('Error checking user authentication:', error);
         setIsAuthenticated(false);
         setUserRole(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
 
     checkUserAndRole();
@@ -91,21 +98,32 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     isLoading: ordersLoading, 
     error: ordersError,
     refetch: refetchOrders 
-  } = useAdminOrdersQuery(isAuthenticated);
+  } = useAdminOrdersQuery(isAuthenticated && userRole === 'admin');
 
   const { 
     data: products = [], 
     isLoading: productsLoading, 
     error: productsError,
     refetch: refetchProducts 
-  } = useAdminProductsQuery(isAuthenticated);
+  } = useAdminProductsQuery(isAuthenticated && userRole === 'admin');
 
   const { 
     data: categories = [], 
     isLoading: categoriesLoading, 
     error: categoriesError,
     refetch: refetchCategories 
-  } = useCategoriesQuery(isAuthenticated);
+  } = useCategoriesQuery(isAuthenticated && userRole === 'admin');
+
+  // Debug logging
+  useEffect(() => {
+    console.log('AdminPage Debug:', {
+      isAuthenticated,
+      userRole,
+      ordersCount: orders?.length || 0,
+      ordersError,
+      ordersLoading
+    });
+  }, [isAuthenticated, userRole, orders, ordersError, ordersLoading]);
 
   // Manual refetch functions
   const handleRefetchOrders = async () => {
@@ -146,7 +164,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
         title: "Product added",
         description: "New product has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
       setIsAddProductOpen(false);
       productForm.reset();
     },
@@ -187,7 +205,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
   });
 
   const handleStatusChange = (orderId: number, status: string) => {
-    updateOrderStatusMutation.mutate({ orderId, status });
+    updateOrderStatusMutation.mutate({ id: orderId, status });
   };
 
   const getStatusColor = (status: string) => {
@@ -241,6 +259,56 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     <div className="min-h-screen bg-cream">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+
+        {/* Refresh Buttons */}
+        <div className="flex gap-4 mb-6">
+          <Button 
+            onClick={handleRefetchOrders} 
+            disabled={ordersLoading}
+            variant="outline"
+          >
+            {ordersLoading ? 'Refreshing...' : 'Refresh Orders'}
+          </Button>
+          <Button 
+            onClick={handleRefetchProducts} 
+            disabled={productsLoading}
+            variant="outline"
+          >
+            {productsLoading ? 'Refreshing...' : 'Refresh Products'}
+          </Button>
+        </div>
+
+        {/* Debug Info */}
+        <div className="bg-gray-100 p-4 rounded-lg mb-6">
+          <h3 className="font-semibold mb-2">Debug Information:</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="font-medium">Authenticated:</span> {isAuthenticated ? 'Yes' : 'No'}
+            </div>
+            <div>
+              <span className="font-medium">User Role:</span> {userRole || 'None'}
+            </div>
+            <div>
+              <span className="font-medium">Orders Count:</span> {orders?.length || 0}
+            </div>
+            <div>
+              <span className="font-medium">Orders Loading:</span> {ordersLoading ? 'Yes' : 'No'}
+            </div>
+          </div>
+          {ordersError && (
+            <div className="mt-2 text-red-600">
+              <span className="font-medium">Orders Error:</span> {ordersError.message}
+            </div>
+          )}
+          {orders && orders.length > 0 && orders[0]._note && (
+            <div className="mt-2 text-blue-600 text-xs">
+              <strong>Database Note:</strong> {orders[0]._note}
+            </div>
+          )}
+          <div className="mt-2 text-blue-600 text-xs">
+            <strong>Note:</strong> If you see "No items details available", the orders table may not have an items field or the order_items table may not exist.
+          </div>
+        </div>
 
         <div className="flex justify-end mb-4">
           <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
@@ -381,6 +449,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
                   <p className="text-2xl font-bold text-primary-900">{totalOrders}</p>
+                  {ordersError && (
+                    <p className="text-xs text-red-600 mt-1">Error: {ordersError.message}</p>
+                  )}
                 </div>
                 <ShoppingCart className="h-8 w-8 text-primary-500" />
               </div>
@@ -493,14 +564,27 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              {order.items && order.items.length > 0 ? (
-                                order.items.map((item, idx) => (
-                                  <p key={idx} className="text-sm">
-                                    {item.name} (x{item.quantity})
-                                  </p>
+                              {order.order_items && order.order_items.length > 0 ? (
+                                order.order_items.map((item: any, idx: number) => (
+                                  <div key={idx} className="text-sm">
+                                    {item.product_id ? (
+                                      <p>Product ID: {item.product_id} (x{item.quantity})</p>
+                                    ) : (
+                                      <p>{item.name || 'Product'} (x{item.quantity})</p>
+                                    )}
+                                    {item.price && <p className="text-xs text-gray-500">${item.price}</p>}
+                                  </div>
                                 ))
                               ) : (
-                                <p className="text-sm text-gray-500">No items</p>
+                                <div className="text-sm text-gray-500">
+                                  <p>No items details available</p>
+                                  {order._note && (
+                                    <p className="text-xs text-blue-600 mt-1">{order._note}</p>
+                                  )}
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    To display order items, add an 'items' JSONB field to your orders table or create an order_items table.
+                                  </p>
+                                </div>
                               )}
                             </div>
                           </TableCell>

@@ -17,6 +17,7 @@ import { useToast } from './ui/use-toast';
 import { ShoppingCart, Package, Users, Edit, Eye, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAdminOrdersQuery, useAdminProductsQuery, useCategoriesQuery, AdminOrder } from '../lib/utils';
+import { useTotalCustomersQuery } from '../lib/queries';
 
 // Mock API functions (replace with actual API calls)
 // Mock API functions (replace with actual API calls)
@@ -113,6 +114,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     error: categoriesError,
     refetch: refetchCategories 
   } = useCategoriesQuery(isAuthenticated && userRole === 'admin');
+
+  const { 
+    data: totalCustomers, 
+    isLoading: customersLoading, 
+    error: customersError,
+    refetch: refetchCustomers 
+  } = useTotalCustomersQuery(isAuthenticated && userRole === 'admin');
 
   // Debug logging
   useEffect(() => {
@@ -252,7 +260,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
   // Calculate stats
   const totalOrders = orders?.length || 0;
   const totalProducts = products?.length || 0;
-  const totalCustomers = 0; // Mock value
   const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
 
   return (
@@ -475,7 +482,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                  <p className="text-2xl font-bold text-primary-900">{totalCustomers}</p>
+                  <p className="text-2xl font-bold text-primary-900">{customersLoading ? '...' : totalCustomers}</p>
+                  {customersError && (
+                    <p className="text-xs text-red-600 mt-1">Error: {customersError.message}</p>
+                  )}
                 </div>
                 <Users className="h-8 w-8 text-primary-500" />
               </div>

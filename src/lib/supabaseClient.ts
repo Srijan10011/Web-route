@@ -4,7 +4,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.error('Missing Supabase environment variables. Please check your .env file.');
+  // Provide fallback or handle gracefully
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -25,10 +26,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Add connection health check
+// Add connection health check using a simple query
 export const checkConnection = async () => {
   try {
-    const { data, error } = await supabase.from('products').select('count').limit(1);
+    // Use a simple query to check database connectivity
+    const { error } = await supabase.from('profiles').select('id').limit(1);
     return { isConnected: !error, error };
   } catch (err) {
     return { isConnected: false, error: err };

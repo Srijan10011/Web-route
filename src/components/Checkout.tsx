@@ -106,22 +106,22 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
     console.log('=== BUTTON CLICKED ===');
     console.log('User state:', user);
     console.log('Session state:', session);
-    
+
     try {
       console.log('=== ORDER PLACEMENT STARTED ===');
       console.log('Cart items:', cart);
       console.log('Form data:', { firstName, lastName, email, phone, address, city, state, location });
-      
+
       // Step 1: Get user (optional for guest checkout)
       console.log('Step 1: Getting user...');
-      let user = null;
+      let currentUser = null; // Renamed to avoid conflict with outer scope 'user'
       try {
         const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
         if (userError) {
           console.log('User not authenticated, proceeding as guest checkout');
         } else if (authUser) {
-          user = authUser;
-          console.log('✓ User authenticated:', user.id);
+          currentUser = authUser;
+          console.log('✓ User authenticated:', currentUser.id);
         } else {
           console.log('✓ User not authenticated, proceeding as guest.');
         }
@@ -160,12 +160,12 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
       console.log('Shipping address prepared:', shippingAddress);
 
       // Step 4: Save user address if user is authenticated
-      if (user) {
+      if (currentUser) { // Use currentUser here
         console.log('Step 4: Saving user address...');
         const { error: upsertError } = await supabase
           .from('user_addresses')
           .upsert({
-            user_id: user.id,
+            user_id: currentUser.id, // Use currentUser.id here
             phone,
             address,
             city,
@@ -185,20 +185,50 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
 
       // Step 5: Prepare order data
       console.log('Step 5: Preparing order data...');
+      const totalWithShipping = totalPrice + 5.99; // Calculate total with shipping
+      const cartItems = cart; // Assuming cart is already in the correct format
+
+      // Define formData and coordinates to match the expected structure in the changes
+      const formData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode: '', // Assuming zipCode is not captured in the form
+      };
+
+      const coordinates = location
+        ? {
+            lat: parseFloat(location.split(', ')[0]),
+            lng: parseFloat(location.split(', ')[1]),
+          }
+        : { lat: null, lng: null };
+
       const orderData = {
         order_number: `ORD-${Date.now()}`,
-        customer_name: `${firstName} ${lastName}`,
-        total_amount: totalPrice + 5.99,
+        total_amount: totalWithShipping.toFixed(2),
         status: 'pending',
-        shipping_address: shippingAddress,
-        items: cart.map(item => ({ // JSONB column automatically handles the conversion
+        order_date: new Date().toISOString(),
+        user_id: currentUser?.id || null, // Add the user_id from the authenticated session or null for guests
+        customer_name: `${firstName} ${lastName}`.trim() || 'Guest',
+        shipping_address: {
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          latitude: coordinates.lat,
+          longitude: coordinates.lng
+        },
+        items: cartItems.map(item => ({
           id: item.id,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
         })),
-        user_id: user ? user.id : null,
-        // Removed customer_email and created_at since they don't exist in orders table
       };
       console.log('Order data prepared:', orderData);
 
@@ -213,7 +243,7 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
         return;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('orders')
         .insert([orderData])
         .select(); // Add .select() to return the inserted data
@@ -237,14 +267,14 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
       if (!data || !Array.isArray(data) || data.length === 0) {
         console.error('❌ Order insert succeeded but returned no data');
         console.error('Data received:', data);
-        
+
         // Try to fetch the order to see if it was actually created
         const { data: fetchedOrder, error: fetchError } = await supabase
           .from('orders')
           .select('*')
           .eq('order_number', orderData.order_number)
           .single();
-          
+
         if (fetchError || !fetchedOrder) {
           console.error('❌ Order was not created in database');
           alert('Failed to create order. Please try again.');
@@ -257,9 +287,15 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
       }
 
       console.log('✓ Order placed successfully:', data);
-      
+
+      // Invalidate user orders query to update Profile page immediately
+      if (currentUser && typeof window !== 'undefined' && (window as any).queryClient) {
+        console.log('Invalidating user orders cache for user:', currentUser.id);
+        (window as any).queryClient.invalidateQueries(['userOrders', currentUser.id]);
+      }
+
       // Create guest session if user is not authenticated
-      if (!user) {
+      if (!currentUser) { // Use currentUser here
         const guestSession: GuestSession = {
           orderId: data[0].id,
           orderNumber: orderData.order_number,
@@ -271,21 +307,21 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
             id: data[0].id
           }
         };
-        
+
         // Store multiple orders in localStorage
         const existingSessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
         existingSessions.push(guestSession);
         localStorage.setItem('guestSessions', JSON.stringify(existingSessions));
-        
+
         // Show success message with session info
         alert(`Order placed successfully! Order #${orderData.order_number}. You can access your order details for the next 24 hours.`);
       } else {
         alert('Order placed successfully!');
       }
-      
+
       setCart([]);
       setCurrentPage('home');
-      
+
     } catch (error: any) {
       console.error('❌ UNEXPECTED ERROR:', error);
       console.error('Error stack:', error.stack);

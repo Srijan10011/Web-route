@@ -48,8 +48,8 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
     // Check immediately
     checkConnectionStatus();
 
-    // Check every 30 seconds
-    const interval = setInterval(checkConnectionStatus, 30000);
+    // Check every 2 minutes
+    const interval = setInterval(checkConnectionStatus, 120000);
 
     return () => clearInterval(interval);
   }, []);

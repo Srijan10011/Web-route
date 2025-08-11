@@ -26,15 +26,17 @@ import GuestOrderAccess from './components/GuestOrderAccess';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retry: 1,
+      retryDelay: 1000,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       refetchOnReconnect: true,
-      refetchOnMount: true,
+      refetchOnMount: false,
     },
   },
 });
+// Make queryClient available globally for cache invalidation
+(window as any).queryClient = queryClient;
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -107,38 +109,6 @@ function App() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
           if (mounted) {
             setSession(session);
-
-            // Check if user is logged in and if they have a profile
-            if (session?.user) {
-              try {
-                const { data: profile, error } = await supabase
-                  .from('profiles')
-                  .select('id')
-                  .eq('id', session.user.id)
-                  .single();
-
-                if (error && error.code === 'PGRST116') { // PGRST116 means no rows found
-                  // Profile does not exist, create it
-                  const { error: insertError } = await supabase
-                    .from('profiles')
-                    .insert({
-                      id: session.user.id,
-                      email: session.user.email,
-                      first_name: session.user.user_metadata.first_name || '',
-                      last_name: session.user.user_metadata.last_name || '',
-                      role: 'user',
-                    });
-
-                  if (insertError) {
-                    console.error('Error creating profile on first login:', insertError);
-                  }
-                } else if (error) {
-                  console.error('Error checking profile on auth state change:', error);
-                }
-              } catch (profileError) {
-                console.error('Error handling profile creation:', profileError);
-              }
-            }
           }
         });
 

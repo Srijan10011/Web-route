@@ -171,7 +171,7 @@ export default function GuestOrderAccess({ setCurrentPage }: GuestOrderAccessPro
                     <div>
                       <h4 className="font-semibold text-gray-800">Order #{session.orderNumber}</h4>
                       <p className="text-sm text-gray-600">{session.customerName}</p>
-                      <p className="text-sm text-gray-600">Total: ${session.orderData.total_amount.toFixed(2)}</p>
+                      <p className="text-sm text-gray-600">Total: ${typeof session.orderData.total_amount === 'number' ? session.orderData.total_amount.toFixed(2) : session.orderData.total_amount}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">

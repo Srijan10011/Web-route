@@ -32,7 +32,7 @@ export interface GuestOrder {
 }
 
 export interface AdminOrder {
-  id: number;
+  id: string; // UUID from orders.id
   order_number: string;
   total_amount: string;
   status: string;
@@ -324,7 +324,6 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
   return useQuery<AdminOrder[]>({
     queryKey: ["adminOrders"],
     queryFn: async (): Promise<AdminOrder[]> => {
-      console.log("Fetching admin orders...");
       try {
         // First, check if we can connect to the database
         const { data: connectionTest, error: connectionError } = await supabase
@@ -333,7 +332,6 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
           .limit(1);
 
         if (connectionError) {
-          console.error("Database connection error:", connectionError);
           throw new Error(
             `Database connection failed: ${connectionError.message}`,
           );
@@ -347,25 +345,45 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
             customer_detail(
               customer_name,
               shipping_address
-            ),
-            guest_order(
-              customer_name,
-              shipping_address,
-              customer_email
             )
           `)
           .order("order_date", { ascending: false });
 
         if (ordersError) {
-          console.error("Error fetching orders:", ordersError);
           throw ordersError;
         }
 
-        console.log("Orders fetched successfully:", orders);
+        // Explicitly fetch guest order details for orders with no user_id
+        const ordersWithGuestDetails: AdminOrder[] = await Promise.all((orders || []).map(async (order) => {
+          if (!order.user_id) {
+            const { data: guestOrderData, error: guestOrderError } = await supabase
+              .from("guest_order")
+              .select(`
+                id,
+                order_id,
+                customer_name,
+                shipping_address,
+                customer_email,
+                created_at
+              `)
+              .eq("order_id", order.id)
+              .single();
+
+            if (guestOrderError && guestOrderError.code !== "PGRST116") { // PGRST116 = no rows found
+              // Optionally, you can throw the error or handle it differently
+            }
+
+            return {
+              ...order,
+              guest_order: guestOrderData || undefined, // Attach guest order data if found
+            };
+          }
+          return order;
+        }));
 
         // Since order_items table doesn't exist, we'll work with the orders table directly
         // Check if orders have an 'items' field or similar that might contain order details
-        const ordersWithItems: AdminOrder[] = (orders || []).map((order) => {
+        const finalOrders: AdminOrder[] = (ordersWithGuestDetails || []).map((order) => {
           // Check if the order has an 'items' field (common in some database designs)
           const hasItemsField = order.hasOwnProperty("items");
           const hasOrderItemsField = order.hasOwnProperty("order_items");
@@ -432,8 +450,8 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
           };
         });
 
-        console.log("Final orders with items:", ordersWithItems);
-        return ordersWithItems;
+        console.log("Final orders with items:", finalOrders);
+        return finalOrders;
       } catch (err: any) {
         console.error("Exception in admin orders query:", err);
         throw err;

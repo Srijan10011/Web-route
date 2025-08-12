@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User, Calendar, ShoppingBag } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useProfileQuery, useUserOrdersQuery } from "../lib/utils";
+import OrderTabs from "./OrderTabs";
 
 interface ProfileProps {
   session: any;
@@ -190,57 +191,7 @@ export default function Profile({ session }: ProfileProps) {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="font-semibold text-lg">
-                        Order #{order.order_number}
-                      </p>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          order.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : order.status === "processing"
-                              ? "bg-blue-100 text-blue-800"
-                              : order.status === "shipped"
-                                ? "bg-purple-100 text-purple-800"
-                                : order.status === "delivered"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-2">
-                      Date: {new Date(order.order_date).toLocaleDateString()}
-                    </p>
-                    <p className="text-gray-800 font-bold text-xl mb-2">
-                      Total: ${parseFloat(order.total_amount).toFixed(2)}
-                    </p>
-                    <div className="border-t border-gray-200 pt-2 mt-2">
-                      <p className="font-medium text-gray-700">Items:</p>
-                      <ul className="list-disc list-inside text-sm text-gray-600">
-                        {order.items && order.items.length > 0 ? (
-                          order.items.map((item: any, idx: number) => (
-                            <li key={idx}>
-                              {item.name} (x{item.quantity}) - $
-                              {item.price.toFixed(2)}
-                            </li>
-                          ))
-                        ) : (
-                          <li>No items listed</li>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <OrderTabs orders={orders} />
             )}
           </div>
 

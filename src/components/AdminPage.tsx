@@ -134,17 +134,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     refetch: refetchCustomers 
   } = useTotalCustomersQuery(isAuthenticated && userRole === 'admin');
 
-  // Debug logging
-  useEffect(() => {
-    console.log('AdminPage Debug:', {
-      isAuthenticated,
-      userRole,
-      ordersCount: orders?.length || 0,
-      ordersError,
-      ordersLoading
-    });
-  }, [isAuthenticated, userRole, orders, ordersError, ordersLoading]);
-
   // Manual refetch functions
   const handleRefetchOrders = async () => {
     await refetchOrders();
@@ -219,28 +208,41 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
   // Update order status mutation
   const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const { data, error } = await supabase.from('orders').update({ status }).eq('id', id);
-      if (error) throw error;
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      console.log(`Attempting to update order ${id} to status: ${status}`);
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', id);
+      if (error) {
+        console.error(`Supabase update error for order ${id}:`, error);
+        throw error;
+      }
+      console.log(`Supabase update result for order ${id}:`, { data });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log(`Order ${variables.id} status updated successfully to ${variables.status}.`, data);
       toast({
         title: "Order updated",
         description: "Order status has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['adminOrders'] });
     },
-    onError: () => {
+    onError: (error, variables) => {
+      console.error(`Failed to update order ${variables.id} to status ${variables.status}:`, error);
+      // Add more detailed error logging
+      console.error("Full error object:", JSON.stringify(error, null, 2));
       toast({
         title: "Error",
-        description: "Failed to update order status. Please try again.",
+        description: `Failed to update order status: ${error.message}. Please try again.`,
         variant: "destructive",
       });
     },
   });
 
-  const handleStatusChange = (orderId: number, status: string) => {
+  const handleStatusChange = (orderId: string, status: string, userId: string | null) => {
+    console.log(`handleStatusChange called for Order ID: ${orderId}, Status: ${status}, User ID: ${userId}`);
     updateOrderStatusMutation.mutate({ id: orderId, status });
   };
 
@@ -716,7 +718,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                           <TableCell>
                             <Select
                               value={order.status}
-                              onValueChange={(value) => handleStatusChange(order.id, value)}
+                              onValueChange={(value) => handleStatusChange(order.id, value, order.user_id || null)}
                             >
                               <SelectTrigger className="w-32">
                                 <SelectValue />

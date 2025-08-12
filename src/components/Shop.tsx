@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Search, Filter, Star, X, RefreshCw } from 'lucide-react';
-import { useProductsQuery } from '../lib/utils';
+import { useProductsQuery, useCategoriesQuery } from '../lib/utils';
 
 interface Product {
   id: number;
@@ -15,14 +15,6 @@ interface Product {
   badgeColor: string | null;
   details?: string[];
 }
-
-const categories = [
-  { id: 'all', name: 'All Products', slug: 'all' },
-  { id: 'dried-mushrooms', name: 'Dried Mushrooms', slug: 'dried-mushrooms' },
-  { id: 'fresh-mushrooms', name: 'Fresh Mushrooms', slug: 'fresh-mushrooms' },
-  { id: 'spawn-seeds', name: 'Spawn Seeds', slug: 'spawn-seeds' },
-  { id: 'cultivation-kits', name: 'Cultivation Kits', slug: 'cultivation-kits' }
-];
 
 function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
   return (
@@ -114,7 +106,22 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
       console.log('Products loaded but array is empty - this might indicate a data issue');
     }
   }, [loading, products.length, error]);
+
+  const { 
+    data: categories = [], 
+    isLoading: categoriesLoading, 
+    error: categoriesError,
+    refetch: refetchCategories 
+  } = useCategoriesQuery();
+
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Ensure 'all' is always an option, and add fetched categories
+  const allCategories = useMemo(() => {
+    const fetchedCats = categories.map(cat => ({ id: cat.id, name: cat.name, slug: cat.name.toLowerCase().replace(/ /g, '-') }));
+    return [{ id: 'all', name: 'All Products', slug: 'all' }, ...fetchedCats];
+  }, [categories]);
+
   const [sortBy, setSortBy] = useState('name');
   const [priceRange, setPriceRange] = useState('all');
 
@@ -129,9 +136,14 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
       );
     }
 
-    // Filter by category
+    // Filter by category (supports new category_id and legacy category name)
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter((product) => {
+        const categoryId = (product as any).category_id as string | undefined;
+        if (categoryId) return categoryId === selectedCategory;
+        const selectedName = categories.find((c: any) => c.id === selectedCategory)?.name;
+        return selectedName ? product.category === selectedName : true;
+      });
     }
 
     // Filter by price range

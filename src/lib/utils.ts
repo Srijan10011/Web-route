@@ -13,12 +13,10 @@ export interface OrderItem {
   price: number;
 }
 
-export interface AdminOrder {
+// Interface for guest orders
+export interface GuestOrder {
   id: number;
-  order_number: string;
-  total_amount: string;
-  status: string;
-  order_date: string;
+  order_id: number; // Foreign key to orders table
   customer_name: string;
   shipping_address: {
     phone?: string;
@@ -29,6 +27,35 @@ export interface AdminOrder {
     latitude?: number;
     longitude?: number;
   };
+  customer_email: string;
+  created_at: string;
+}
+
+export interface AdminOrder {
+  id: number;
+  order_number: string;
+  total_amount: string;
+  status: string;
+  order_date: string;
+  user_id?: string | null; // Can be null for guest orders
+  
+  // Customer details for authenticated users
+  customer_details?: {
+    customer_name: string;
+    shipping_address: {
+      phone?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      latitude?: number;
+      longitude?: number;
+    };
+  };
+  
+  // Guest order details
+  guest_order?: GuestOrder;
+  
   order_items?: OrderItem[];
   _note?: string;
 }
@@ -233,10 +260,16 @@ export const useUserOrdersQuery = (userId: string | undefined) => {
 
       console.log("Fetching orders for user ID:", userId);
 
-      // Fetch all orders for this specific user
+      // Join orders with customer_detail table for authenticated users
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          customer_detail!inner(
+            customer_name,
+            shipping_address
+          )
+        `)
         .eq("user_id", userId)
         .order("order_date", { ascending: false });
 
@@ -306,10 +339,21 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
           );
         }
 
-        // Get all orders with all available fields
+        // Get all orders with customer details and guest orders
         const { data: orders, error: ordersError } = await supabase
           .from("orders")
-          .select("*")
+          .select(`
+            *,
+            customer_detail(
+              customer_name,
+              shipping_address
+            ),
+            guest_order(
+              customer_name,
+              shipping_address,
+              customer_email
+            )
+          `)
           .order("order_date", { ascending: false });
 
         if (ordersError) {
@@ -365,9 +409,24 @@ export const useAdminOrdersQuery = (enabled: boolean = true) => {
             total_amount: order.total_amount || "0.00",
             status: order.status || "pending",
             order_date: order.order_date || new Date().toISOString(),
-            customer_name:
-              order.customer_name || order.customer_name || "Unknown Customer",
-            shipping_address: order.shipping_address || {},
+            user_id: order.user_id,
+            
+            // Customer details for authenticated users
+            customer_details: order.customer_detail ? {
+              customer_name: order.customer_detail.customer_name || "Unknown Customer",
+              shipping_address: order.customer_detail.shipping_address || {}
+            } : undefined,
+            
+            // Guest order details
+            guest_order: order.guest_order ? {
+              id: order.guest_order.id,
+              order_id: order.id,
+              customer_name: order.guest_order.customer_name || "Guest Customer",
+              shipping_address: order.guest_order.shipping_address || {},
+              customer_email: order.guest_order.customer_email || "No email",
+              created_at: order.guest_order.created_at || new Date().toISOString()
+            } : undefined,
+            
             order_items: orderItems,
             _note: note,
           };

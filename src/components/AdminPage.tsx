@@ -544,33 +544,71 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                             #{order.order_number}
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <p className="font-medium">
-                                {order.customer_name}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {order.shipping_address?.phone}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {order.shipping_address?.address}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {order.shipping_address?.city}, {order.shipping_address?.state} {order.shipping_address?.zipCode}
-                              </p>
-                              {order.shipping_address?.latitude && order.shipping_address?.longitude && (
-                                <div className="mt-2">
-                                  <a 
-                                    href={`https://maps.google.com/?q=${order.shipping_address.latitude},${order.shipping_address.longitude}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
-                                  >
-                                    <MapPin className="h-3 w-3 mr-1" />
-                                    View on Google Maps
-                                  </a>
-                                </div>
-                              )}
-                            </div>
+                                                          <div>
+                                {/* Display customer info based on order type */}
+                                {order.user_id ? (
+                                  // Authenticated user order
+                                  <>
+                                    <p className="font-medium">
+                                      {order.customer_details?.customer_name || 'Unknown Customer'}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.customer_details?.shipping_address?.phone}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.customer_details?.shipping_address?.address}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.customer_details?.shipping_address?.city}, {order.customer_details?.shipping_address?.state} {order.customer_details?.shipping_address?.zipCode}
+                                    </p>
+                                    {order.customer_details?.shipping_address?.latitude && order.customer_details?.shipping_address?.longitude && (
+                                      <div className="mt-2">
+                                        <a 
+                                          href={`https://maps.google.com/?q=${order.customer_details.shipping_address.latitude},${order.customer_details.shipping_address.longitude}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                          <MapPin className="h-3 w-3 mr-1" />
+                                          View on Google Maps
+                                        </a>
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  // Guest order
+                                  <>
+                                    <p className="font-medium text-blue-600">
+                                      {order.guest_order?.customer_name || 'Guest Customer'} (Guest)
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.guest_order?.customer_email}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.guest_order?.shipping_address?.phone}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.guest_order?.shipping_address?.address}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.guest_order?.shipping_address?.city}, {order.guest_order?.shipping_address?.state} {order.guest_order?.shipping_address?.zipCode}
+                                    </p>
+                                    {order.guest_order?.shipping_address?.latitude && order.guest_order?.shipping_address?.longitude && (
+                                      <div className="mt-2">
+                                        <a 
+                                          href={`https://maps.google.com/?q=${order.guest_order.shipping_address.latitude},${order.guest_order.shipping_address.longitude}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                          <MapPin className="h-3 w-3 mr-1" />
+                                          View on Google Maps
+                                        </a>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">

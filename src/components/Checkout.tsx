@@ -207,12 +207,23 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
           }
         : { lat: null, lng: null };
 
-      const orderData = {
+      // Create order data (without customer info)
+      const orderData: any = {
         order_number: `ORD-${Date.now()}`,
         total_amount: totalWithShipping.toFixed(2),
         status: 'pending',
         order_date: new Date().toISOString(),
-        user_id: currentUser?.id || null, // Add the user_id from the authenticated session or null for guests
+        user_id: currentUser?.id || null, // null for guest orders
+        items: cartItems.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+
+      // Prepare customer information
+      const customerInfo = {
         customer_name: `${firstName} ${lastName}`.trim() || 'Guest',
         shipping_address: {
           phone: formData.phone,
@@ -222,13 +233,7 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
           zipCode: formData.zipCode,
           latitude: coordinates.lat,
           longitude: coordinates.lng
-        },
-        items: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
+        }
       };
       console.log('Order data prepared:', orderData);
 
@@ -237,12 +242,40 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
       console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
 
       // First, let's validate the data before sending
-      if (!orderData.order_number || !orderData.customer_name || !orderData.total_amount) {
+      if (!orderData.order_number || !orderData.total_amount) {
         console.error('❌ Missing required fields:', orderData);
         alert('Please fill in all required fields');
         return;
       }
 
+      // Handle customer information based on user type
+      if (currentUser) {
+        // Authenticated user - create customer_detail record
+        const customerDetailData = {
+          user_id: currentUser.id,
+          ...customerInfo
+        };
+
+        const { data: customerDetail, error: customerError } = await supabase
+          .from('customer_detail')
+          .insert([customerDetailData])
+          .select()
+          .single();
+
+        if (customerError) {
+          console.error('❌ Customer detail insert failed:', customerError);
+          alert(`Failed to create customer details: ${customerError.message}`);
+          return;
+        }
+
+        // Add customer_detail_id to order
+        orderData.customer_detail_id = customerDetail.id;
+      } else {
+        // Guest user - create guest_order record after order is created
+        // We'll handle this after the order is inserted
+      }
+
+      // Insert the order
       let { data, error } = await supabase
         .from('orders')
         .insert([orderData])
@@ -287,6 +320,28 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
       }
 
       console.log('✓ Order placed successfully:', data);
+
+      // Create guest_order record if this is a guest order
+      if (!currentUser && data && data.length > 0) {
+        const guestOrderData = {
+          order_id: data[0].id,
+          customer_name: customerInfo.customer_name,
+          shipping_address: customerInfo.shipping_address,
+          customer_email: email,
+          created_at: new Date().toISOString()
+        };
+
+        const { error: guestOrderError } = await supabase
+          .from('guest_order')
+          .insert([guestOrderData]);
+
+        if (guestOrderError) {
+          console.error('❌ Guest order details insert failed:', guestOrderError);
+          // Don't fail the entire order for this, just log it
+        } else {
+          console.log('✓ Guest order details created successfully');
+        }
+      }
 
       // Invalidate user orders query to update Profile page immediately
       if (currentUser && typeof window !== 'undefined' && (window as any).queryClient) {

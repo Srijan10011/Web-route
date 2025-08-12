@@ -11,7 +11,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { useToast } from './ui/use-toast';
 import { ShoppingCart, Package, Users, Edit, Eye, MapPin } from 'lucide-react';
@@ -36,11 +36,23 @@ const mockApiRequest = async (method: string, url: string, data?: any) => {
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
-  stockQuantity: z.string().regex(/^\d+$/, "Stock quantity must be a number"),
-  imageUrl: z.string().url("Invalid URL"),
-  shortDescription: z.string().optional(),
+  image: z.string().url("Invalid URL"),
   description: z.string().optional(),
-  categoryId: z.string().min(1, "Category is required"),
+  category: z.string().min(1, "Category is required"),
+  rating: z.preprocess(
+    (val) => Number(val),
+    z.number().min(0).max(5).optional()
+  ),
+  reviews: z.preprocess(
+    (val) => Number(val),
+    z.number().int().min(0).optional()
+  ),
+  badge: z.string().optional(),
+  badgeColor: z.string().optional(),
+  details: z.preprocess(
+    (val) => (typeof val === 'string' && val.length > 0 ? val.split(',').map(s => s.trim()) : []),
+    z.array(z.string()).optional()
+  ),
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -152,18 +164,34 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
     defaultValues: {
       name: '',
       price: '',
-      stockQuantity: '',
-      imageUrl: '',
-      shortDescription: '',
+      image: '',
       description: '',
-      categoryId: '',
+      category: '',
+      rating: 0,
+      reviews: 0,
+      badge: '',
+      badgeColor: '',
+      details: [],
     },
   });
 
   // Add product mutation
   const addProductMutation = useMutation({
     mutationFn: async (newProduct: ProductForm) => {
-      const { data, error } = await supabase.from('products').insert([newProduct]);
+      const { data, error } = await supabase.from('products').insert([
+        {
+          name: newProduct.name,
+          price: parseFloat(newProduct.price),
+          image: newProduct.image,
+          description: newProduct.description,
+          category: newProduct.category,
+          rating: newProduct.rating,
+          reviews: newProduct.reviews,
+          badge: newProduct.badge,
+          badgeColor: newProduct.badgeColor,
+          details: newProduct.details ? [newProduct.details] : [],
+        },
+      ]);
       if (error) throw error;
       return data;
     },
@@ -322,9 +350,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
             <DialogTrigger asChild>
               <Button>Add New Product</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[600px] bg-slate-50 border-blue-100">
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
+                <DialogDescription>Fill in the product details below and click Add Product to save.</DialogDescription>
               </DialogHeader>
               <Form {...productForm}>
                 <form onSubmit={productForm.handleSubmit(onSubmitProduct)} className="space-y-4">
@@ -344,7 +373,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     />
                     <FormField
                       control={productForm.control}
-                      name="categoryId"
+                      name="category"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Category</FormLabel>
@@ -366,6 +395,58 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={productForm.control}
+                      name="rating"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rating</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" min="0" max="5" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="reviews"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Number of Reviews</FormLabel>
+                          <FormControl>
+                            <Input type="number" min="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="badge"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Badge Text</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="badgeColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Badge Color</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   <FormField
                     control={productForm.control}
@@ -382,20 +463,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                   />
                   <FormField
                     control={productForm.control}
-                    name="shortDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Short Description</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={productForm.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
@@ -408,25 +475,27 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     )}
                   />
                   
+                  <FormField
+                    control={productForm.control}
+                    name="details"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Details</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <div className="grid grid-cols-3 gap-4">
-                    <FormField
-                      control={productForm.control}
-                      name="stockQuantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stock Quantity</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    
                   </div>
                   
                   <FormField
                     control={productForm.control}
-                    name="imageUrl"
+                    name="image"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Image URL</FormLabel>

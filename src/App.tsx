@@ -17,7 +17,19 @@ import Profile from './components/Profile';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import AdminPage from './components/AdminPage';
+import { useVisibilityRefetch } from './lib/utils';
+
 import { supabase, checkConnection } from './lib/supabaseClient';
+import {
+  fetchUserCart,
+  addItemToUserCart,
+  setItemQuantityInUserCart,
+  removeItemFromUserCart,
+  clearUserCart,
+  loadGuestCart,
+  saveGuestCart,
+  clearGuestCart
+} from './lib/cart';
 import { Session } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from './components/ui/toaster';
@@ -29,9 +41,9 @@ const queryClient = new QueryClient({
       retry: 1,
       retryDelay: 1000,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      refetchOnMount: false,
+      refetchOnMount: true,
     },
   },
 });
@@ -47,29 +59,67 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const addToCart = (product: any) => {
-    const existingProduct = cart.find(item => item.id === product.id);
-    if (existingProduct) {
-      setCart(cart.map(item =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-      ));
+  const refetchCart = async () => {
+    if (session?.user) {
+      const items = await fetchUserCart(session.user.id);
+      setCart(items);
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart(loadGuestCart());
     }
   };
 
-  const updateCartQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
+  const addToCart = async (product: any) => {
+    if (session?.user) {
+      await addItemToUserCart(session.user.id, product.id, 1);
+      await refetchCart();
     } else {
-      setCart(cart.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      ));
+      const items = [...cart];
+      const found = items.find(i => i.id === product.id);
+      if (found) {
+        found.quantity += 1;
+      } else {
+        items.push({ ...product, quantity: 1 });
+      }
+      saveGuestCart(items);
+      setCart(items);
     }
   };
 
-  const removeFromCart = (productId: number) => {
-    setCart(cart.filter(item => item.id !== productId));
+  const updateCartQuantity = async (productId: number, quantity: number) => {
+    if (session?.user) {
+      await setItemQuantityInUserCart(session.user.id, productId, quantity);
+      await refetchCart();
+    } else {
+      let items;
+      if (quantity <= 0) {
+        items = cart.filter(i => i.id !== productId);
+      } else {
+        items = cart.map(i => i.id === productId ? { ...i, quantity } : i);
+      }
+      saveGuestCart(items);
+      setCart(items);
+    }
+  };
+
+  const removeFromCart = async (productId: number) => {
+    if (session?.user) {
+      await removeItemFromUserCart(session.user.id, productId);
+      await refetchCart();
+    } else {
+      const items = cart.filter(item => item.id !== productId);
+      saveGuestCart(items);
+      setCart(items);
+    }
+  };
+
+  const clearCart = async () => {
+    if (session?.user) {
+      await clearUserCart(session.user.id);
+      await refetchCart();
+    } else {
+      clearGuestCart();
+      setCart([]);
+    }
   };
 
   // Check database connection health
@@ -87,7 +137,18 @@ function App() {
       setConnectionError('Database connection error. Please refresh the page.');
     }
   };
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && session?.user) {
+        refetchCart(); // Refetch when tab becomes visible
+      }
+    };
+  
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [session?.user]);
 
+  
   useEffect(() => {
     let mounted = true;
 
@@ -109,10 +170,14 @@ function App() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
           if (mounted) {
             setSession(session);
+            // Whenever auth changes, refresh cart from appropriate source
+            await refetchCart();
           }
         });
 
         if (mounted) {
+          // Initial cart load
+          await refetchCart();
           setIsLoading(false);
         }
 
@@ -230,7 +295,7 @@ function App() {
         return (
           <div>
             <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
-            <Cart cart={cart} setCurrentPage={setCurrentPage} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} />
+            <Cart cart={cart} setCurrentPage={setCurrentPage} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
         );
@@ -238,7 +303,7 @@ function App() {
         return (
           <div>
             <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
-            <Checkout cart={cart} setCurrentPage={setCurrentPage} session={session} setCart={setCart} />
+            <Checkout cart={cart} setCurrentPage={setCurrentPage} session={session} clearCart={clearCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
         );

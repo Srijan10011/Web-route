@@ -6,7 +6,7 @@ interface CheckoutProps {
   cart: any[];
   setCurrentPage: (page: string) => void;
   session: any;
-  setCart: (cart: any[]) => void;
+  clearCart: () => void | Promise<void>;
 }
 
 interface GuestSession {
@@ -18,7 +18,7 @@ interface GuestSession {
   orderData: any;
 }
 
-export default function Checkout({ cart, setCurrentPage, session, setCart }: CheckoutProps) {
+export default function Checkout({ cart, setCurrentPage, session, clearCart }: CheckoutProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -374,7 +374,7 @@ export default function Checkout({ cart, setCurrentPage, session, setCart }: Che
         alert('Order placed successfully!');
       }
 
-      setCart([]);
+      await clearCart();
       setCurrentPage('home');
 
     } catch (error: any) {

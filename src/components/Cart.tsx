@@ -6,9 +6,10 @@ interface CartProps {
   setCurrentPage: (page: string) => void;
   updateCartQuantity: (productId: number, quantity: number) => void;
   removeFromCart: (productId: number) => void;
+  clearCart: () => void | Promise<void>;
 }
 
-export default function Cart({ cart, setCurrentPage, updateCartQuantity, removeFromCart }: CartProps) {
+export default function Cart({ cart, setCurrentPage, updateCartQuantity, removeFromCart, clearCart }: CartProps) {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -33,7 +34,7 @@ export default function Cart({ cart, setCurrentPage, updateCartQuantity, removeF
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Shopping Cart ({cart.length} items)</h1>
-          <button onClick={() => setCart([])} className="text-gray-500 hover:text-gray-700">Clear Cart</button>
+          <button onClick={clearCart} className="text-gray-500 hover:text-gray-700">Clear Cart</button>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg overflow-hidden p-8">

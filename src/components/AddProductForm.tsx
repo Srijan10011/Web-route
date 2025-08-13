@@ -68,29 +68,35 @@ const AddProductForm: React.FC<AddProductFormProps> = ({ categories, onClose }) 
   });
 
   // Add product mutation
-  // Add product mutation
-const addProductMutation = useMutation({
-  mutationFn: async (newProduct: ProductForm) => {
-    const categoryName =
-      categories?.find((c: any) => c.id === newProduct.categoryId)?.name ?? null;
+  const addProductMutation = useMutation({
+    mutationFn: async (newProduct: ProductForm) => {
+      const payload = {
+        name: newProduct.name,
+        price: parseFloat(newProduct.price),
+        description: newProduct.description || newProduct.shortDescription || null,
+        image: newProduct.imageUrl,
+        category_id: newProduct.categoryId,
+        rating: newProduct.rating,
+        reviews: newProduct.reviews,
+        badge: newProduct.badge,
+        badgeColor: newProduct.badgeColor,
+        details_text: newProduct.details_text,
+      };
 
-    const payload = {
-      name: newProduct.name,
-      price: parseFloat(newProduct.price),
-      description: newProduct.description || newProduct.shortDescription || null,
-      image: newProduct.imageUrl,
-      category: categoryName,
-      rating: newProduct.rating,
-      reviews: newProduct.reviews,
-      badge: newProduct.badge,
-      badgeColor: newProduct.badgeColor,
-      details_text: newProduct.details_text,
-    };
-
-    const { data, error } = await supabase.from('products').insert([payload]).select();
-    if (error) throw error;
-    return data;
-  },
+      const { data, error } = await supabase.from('products').insert([payload]).select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: 'Product added', description: 'New product has been added successfully.' });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      productForm.reset();
+      onClose();
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to add product. Please try again.', variant: 'destructive' });
+    }
+  });
 
   const onSubmitProduct = (data: ProductForm) => {
     addProductMutation.mutate(data);

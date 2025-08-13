@@ -38,7 +38,7 @@ const productSchema = z.object({
   price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
   image: z.string().url("Invalid URL"),
   description: z.string().optional(),
-  category: z.string().min(1, "Category is required"),
+  category: z.string().min(1, "Category is required"), // holds category_id UUID from categories table
   rating: z.preprocess(
     (val) => Number(val),
     z.number().min(0).max(5).optional()
@@ -155,7 +155,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
       price: '',
       image: '',
       description: '',
-      category: '',
+      category: '', // stores category_id
       rating: 0,
       reviews: 0,
       badge: '',
@@ -173,7 +173,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
           price: parseFloat(newProduct.price),
           image: newProduct.image,
           description: newProduct.description,
-          category: newProduct.category,
+          category_id: newProduct.category,
           rating: newProduct.rating,
           reviews: newProduct.reviews,
           badge: newProduct.badge,

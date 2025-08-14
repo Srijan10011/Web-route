@@ -14,6 +14,7 @@ import Signup from './components/Signup';
 import TrackOrder from './components/TrackOrder';
 import ProductDetail from './components/ProductDetail';
 import Profile from './components/Profile';
+import UpdateProfile from './components/UpdateProfile';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import AdminPage from './components/AdminPage';
@@ -287,7 +288,15 @@ function App() {
         return (
           <div>
             <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
-            <Profile session={session} />
+            <Profile session={session} setCurrentPage={setCurrentPage} />
+            <Footer setCurrentPage={setCurrentPage} />
+          </div>
+        );
+      case 'update-profile':
+        return (
+          <div>
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <UpdateProfile setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
         );

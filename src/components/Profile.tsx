@@ -6,9 +6,10 @@ import OrderTabs from "./OrderTabs";
 
 interface ProfileProps {
   session: any;
+  setCurrentPage: (page: string) => void;
 }
 
-export default function Profile({ session }: ProfileProps) {
+export default function Profile({ session, setCurrentPage }: ProfileProps) {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
@@ -197,7 +198,7 @@ export default function Profile({ session }: ProfileProps) {
 
           <div className="text-center">
             <button
-              onClick={() => console.log("Edit Profile clicked")}
+              onClick={() => setCurrentPage('update-profile')}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
               Edit Profile

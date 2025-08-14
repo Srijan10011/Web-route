@@ -45,6 +45,7 @@ export const useUserReviewQuery = (userId: string | undefined, productId: number
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
+        
         .eq('user_id', userId)
         .eq('product_id', productId)
         .single();

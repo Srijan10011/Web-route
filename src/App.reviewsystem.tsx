@@ -17,6 +17,7 @@ import Profile from './components/Profile';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import AdminPage from './components/AdminPage';
+import ConfigurationStatus from './components/ConfigurationStatus';
 import { useVisibilityRefetch } from './lib/utils';
 
 import { supabase, checkConnection } from './lib/supabaseClient';
@@ -341,12 +342,14 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen">
-        {renderPage()}
-        {modal === 'login' && <Login setModal={setModal} />}
-        {modal === 'signup' && <Signup setModal={setModal} />}
-      </div>
-      <Toaster />
+      <ConfigurationStatus>
+        <div className="min-h-screen">
+          {renderPage()}
+          {modal === 'login' && <Login setModal={setModal} />}
+          {modal === 'signup' && <Signup setModal={setModal} />}
+        </div>
+        <Toaster />
+      </ConfigurationStatus>
     </QueryClientProvider>
   );
 }

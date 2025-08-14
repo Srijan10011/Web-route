@@ -124,8 +124,8 @@ BEGIN
         r.rating,
         r.comment,
         r.created_at,
-        COALESCE(p.first_name || ' ' || p.last_name, 'Anonymous') as user_name,
-        au.email as user_email
+        COALESCE(NULLIF(TRIM(p.first_name || ' ' || p.last_name), ''), 'Anonymous')::TEXT as user_name,
+        COALESCE(au.email, '')::TEXT as user_email
     FROM reviews r
     LEFT JOIN profiles p ON r.user_id = p.id
     LEFT JOIN auth.users au ON r.user_id = au.id

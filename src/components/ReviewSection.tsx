@@ -152,9 +152,11 @@ const ReviewItem: React.FC<{
   onEdit?: () => void; 
   onDelete?: () => void;
 }> = ({ review, isOwnReview, onEdit, onDelete }) => {
+  console.log('ReviewItem - review data:', review); // Debug log
+  
   return (
     <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-3">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
             <User className="h-5 w-5 text-green-600" />
@@ -194,9 +196,14 @@ const ReviewItem: React.FC<{
         )}
       </div>
       
-      {review.comment && (
-        <p className="text-gray-700 ml-13">{review.comment}</p>
-      )}
+      {/* Always show comment section, even if empty */}
+      <div className="ml-12 mt-2">
+        {review.comment && review.comment.trim() ? (
+          <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+        ) : (
+          <p className="text-gray-500 italic">No comment provided</p>
+        )}
+      </div>
     </div>
   );
 };
@@ -208,6 +215,22 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
   const { data: canReview = false, isLoading: canReviewLoading } = useCanUserReviewQuery(userId, productId);
   const { data: userReview, isLoading: userReviewLoading } = useUserReviewQuery(userId, productId);
   const { data: reviews = [], isLoading: reviewsLoading } = useProductReviewsQuery(productId);
+
+  React.useEffect(() => {
+    if (reviews) {
+      console.log("Fetched reviews:", reviews);
+      reviews.forEach((review, index) => {
+        console.log(`Review ${index + 1}:`, {
+          id: review.id,
+          user_name: review.user_name,
+          rating: review.rating,
+          comment: review.comment,
+          comment_length: review.comment?.length || 0,
+          comment_exists: !!review.comment
+        });
+      });
+    }
+  }, [reviews]);
   const { data: reviewStats, isLoading: statsLoading } = useProductReviewStatsQuery(productId);
   const deleteReviewMutation = useDeleteReviewMutation();
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, retryOperation } from '../lib/supabaseClient';
 import { useProductQuery } from '../lib/utils';
 import { Star, ShoppingCart, Heart, Share2, ArrowLeft, MapPin } from 'lucide-react';
+import ReviewSection from './ReviewSection';
 
 interface Product {
   id: number;
@@ -21,9 +22,10 @@ interface ProductDetailProps {
   productId: number | null;
   setCurrentPage: (page: string) => void;
   addToCart: (product: any) => void;
+  session?: any;
 }
 
-export default function ProductDetail({ productId, setCurrentPage, addToCart }: ProductDetailProps) {
+export default function ProductDetail({ productId, setCurrentPage, addToCart, session }: ProductDetailProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,6 +147,16 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart }: 
               <ShoppingCart className="h-6 w-6" />
               <span>Add to Cart</span>
             </button>
+          </div>
+        </div>
+
+        {/* Review Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <ReviewSection 
+              productId={product.id} 
+              userId={session?.user?.id}
+            />
           </div>
         </div>
       </div>

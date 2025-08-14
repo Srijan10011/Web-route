@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { MapPin } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 import { AdminOrder } from '../lib/utils';
+import { formatOrderDate, getRelativeTime } from '../lib/dateUtils';
 
 interface OrderStatusTabsProps {
   orders: AdminOrder[];
@@ -41,6 +42,7 @@ const OrderStatusTabs: React.FC<OrderStatusTabsProps> = ({
             <TableHead>Customer</TableHead>
             <TableHead>Items</TableHead>
             <TableHead>Total</TableHead>
+            <TableHead>Order Created Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -146,6 +148,17 @@ const OrderStatusTabs: React.FC<OrderStatusTabsProps> = ({
               </TableCell>
               <TableCell className="font-semibold">
                 ${parseFloat(order.total_amount).toFixed(2)}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <div className="flex items-center text-sm font-medium text-gray-900">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                    {formatOrderDate(order.order_date)}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {getRelativeTime(order.order_date)}
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 <Badge className={getStatusColor(order.status)}>

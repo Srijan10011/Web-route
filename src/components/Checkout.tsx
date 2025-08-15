@@ -80,16 +80,38 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
     }
   }, [profile, session]);
 
+  // Load guest contact info from localStorage if not authenticated
   useEffect(() => {
-    if (addressData) {
-      setPhone(addressData.phone || '');
-      setAddress(addressData.address || '');
-      setCity(addressData.city || '');
-      setState(addressData.state || '');
-      if (addressData.latitude && addressData.longitude) {
-        setLocation(`${addressData.latitude}, ${addressData.longitude}`);
+    if (!session) { // Only for guest users
+      const savedContactInfo = localStorage.getItem('guestContactInfo');
+      if (savedContactInfo) {
+        try {
+          const parsedInfo = JSON.parse(savedContactInfo);
+          setFirstName(parsedInfo.firstName || '');
+          setLastName(parsedInfo.lastName || '');
+          setEmail(parsedInfo.email || '');
+          setPhone(parsedInfo.phone || '');
+        } catch (e) {
+          console.error("Error parsing guest contact info from localStorage", e);
+          // Clear invalid data to prevent future errors
+          localStorage.removeItem('guestContactInfo');
+        }
       }
     }
+  }, [session]); // Run when session changes
+
+  useEffect(() => {
+    if (addressData) {
+        setPhone(addressData.phone || '');
+        setAddress(addressData.address || '');
+        setCity(addressData.city || '');
+        setState(addressData.state || '');
+        // Removed automatic location pre-fill as per user request
+        // if (addressData.latitude && addressData.longitude) {
+        //   setLocation(`${addressData.latitude}, ${addressData.longitude}`);
+        // }
+      }
+    
   }, [addressData]);
 
   const getLocation = () => {
@@ -356,7 +378,6 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           orderNumber: orderData.order_number,
           customerEmail: email,
           customerName: `${firstName} ${lastName}`,
-          expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours from now
           orderData: {
             ...orderData,
             id: data[0].id
@@ -367,6 +388,15 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
         const existingSessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
         existingSessions.push(guestSession);
         localStorage.setItem('guestSessions', JSON.stringify(existingSessions));
+
+        // Save guest contact info to localStorage
+        const guestContactInfo = {
+          firstName,
+          lastName,
+          email,
+          phone,
+        };
+        localStorage.setItem('guestContactInfo', JSON.stringify(guestContactInfo));
 
         // Show success message with session info
         alert(`Order placed successfully! Order #${orderData.order_number}. You can access your order details for the next 24 hours.`);

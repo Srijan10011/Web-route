@@ -9,7 +9,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  image_url: string;
+  image: string;
   category: string;
   rating: number;
   stock: number;
@@ -111,7 +111,7 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden lg:flex">
           <div className="lg:w-1/2">
             <img
-              src={product.image_url}
+              src={product.image}
               alt={product.name}
               className="w-full h-96 object-cover"
             />

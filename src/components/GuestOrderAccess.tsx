@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, Mail, User } from 'lucide-react';
+import { Package, Clock, Mail, User, Calendar, MapPin } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { supabase } from '../lib/supabaseClient';
 
 interface GuestOrderAccessProps {
   setCurrentPage: (page: string) => void;
@@ -10,50 +15,238 @@ interface GuestSession {
   orderNumber: string;
   customerEmail: string;
   customerName: string;
-  expiresAt: number;
-  orderData: any;
+  orderData: {
+    id: string;
+    order_number: string;
+    total_amount: number;
+    status: string; // Added status to GuestSession
+    order_date: string;
+    items: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      price: number;
+    }>;
+    // Add other properties from orderData if needed
+    shipping_address?: {
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      latitude: number | null;
+      longitude: number | null;
+      phone: string;
+    };
+  };
 }
 
 export default function GuestOrderAccess({ setCurrentPage }: GuestOrderAccessProps) {
   const [guestSessions, setGuestSessions] = useState<GuestSession[]>([]);
   const [currentSession, setCurrentSession] = useState<GuestSession | null>(null);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
-    // Load all guest sessions
-    const sessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
-    const validSessions = sessions.filter((session: GuestSession) => 
-      session.expiresAt > Date.now()
+    const loadAndFetchGuestOrders = async () => {
+      setLoading(true);
+      const sessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
+      // No filtering based on expiration as per previous user request to remove expiration
+      // If expiration is still desired, the filter should be re-added here.
+
+      // Fetch latest status for each session from Supabase
+      const updatedSessions = await Promise.all(sessions.map(async (session: GuestSession) => {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('id', session.orderId)
+          .single();
+
+        if (error) {
+          console.error(`Error fetching status for order ${session.orderId}:`, error);
+          return session; // Return original session if fetch fails
+        }
+
+        if (data && data.status) {
+          return {
+            ...session,
+            orderData: {
+              ...session.orderData,
+              status: data.status,
+            },
+          };
+        }
+        return session;
+      }));
+
+      // Update localStorage with potentially new statuses
+      localStorage.setItem('guestSessions', JSON.stringify(updatedSessions));
+
+      setGuestSessions(updatedSessions);
+
+      if (updatedSessions.length > 0) {
+        setCurrentSession(updatedSessions[0]);
+      }
+      setLoading(false);
+    };
+
+    loadAndFetchGuestOrders();
+  }, []); // Empty dependency array to run only once on mount
+
+  
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-200 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-200 text-blue-800';
+      case 'shipped':
+        return 'bg-purple-200 text-purple-800';
+      case 'delivered':
+        return 'bg-green-200 text-green-800';
+      case 'cancelled':
+        return 'bg-red-200 text-red-800';
+      default:
+        return 'bg-gray-200 text-gray-800';
+    }
+  };
+
+  const formatOrderDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return `${seconds} second${seconds > 1 ? 's' : ''} ago`;
+  };
+
+  const pendingGuestOrders = guestSessions.filter(session => session.orderData.status !== 'delivered' && session.orderData.status !== 'removed');
+  const deliveredGuestOrders = guestSessions.filter(session => session.orderData.status === 'delivered');
+
+  const renderGuestOrdersTable = (filteredOrders: GuestSession[], emptyMessage: string) => {
+    if (filteredOrders.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order #</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Order Date</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredOrders.map((session) => (
+            <TableRow key={session.orderId}>
+              <TableCell className="font-medium">
+                #{session.orderNumber}
+              </TableCell>
+              <TableCell>
+                <div>
+                  <p className="font-medium text-blue-600">
+                    {session.customerName} (Guest)
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {session.customerEmail}
+                  </p>
+                  {session.orderData.shipping_address && (
+                    <>
+                      <p className="text-sm text-gray-600">
+                        {session.orderData.shipping_address.phone}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {session.orderData.shipping_address.address}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {session.orderData.shipping_address.city}, {session.orderData.shipping_address.state} {session.orderData.shipping_address.zipCode}
+                      </p>
+                      {session.orderData.shipping_address.latitude && session.orderData.shipping_address.longitude && (
+                        <div className="mt-2">
+                          <a
+                            href={`https://maps.google.com/?q=${session.orderData.shipping_address.latitude},${session.orderData.shipping_address.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
+                          >
+                            <MapPin className="h-3 w-3 mr-1" />
+                            View on Google Maps
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  {(typeof session.orderData.items === 'string'
+                    ? JSON.parse(session.orderData.items)
+                    : session.orderData.items
+                  ).map((item: any, idx: number) => (
+                    <div key={idx} className="text-sm">
+                      <p>{item.name} (x{item.quantity})</p>
+                      {item.price && <p className="text-xs text-gray-500">${item.price}</p>}
+                    </div>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell className="font-semibold">
+                ${parseFloat(session.orderData.total_amount).toFixed(2)}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col">
+                  <div className="flex items-center text-sm font-medium text-gray-900">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                    {formatOrderDate(session.orderData.order_date)}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {getRelativeTime(session.orderData.order_date)}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge className={getStatusColor(session.orderData.status)}>
+                  {session.orderData.status.charAt(0).toUpperCase() + session.orderData.status.slice(1)}
+                </Badge>
+              </TableCell>
+              </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     );
-    
-    // Remove expired sessions
-    if (validSessions.length !== sessions.length) {
-      localStorage.setItem('guestSessions', JSON.stringify(validSessions));
-    }
-    
-    setGuestSessions(validSessions);
-    
-    if (validSessions.length > 0) {
-      setCurrentSession(validSessions[0]); // Show first session by default
-    }
-  }, []);
-
-  const clearSession = (sessionId: string) => {
-    const updatedSessions = guestSessions.filter(session => session.orderId !== sessionId);
-    setGuestSessions(updatedSessions);
-    localStorage.setItem('guestSessions', JSON.stringify(updatedSessions));
-    
-    if (updatedSessions.length === 0) {
-      setCurrentSession(null);
-    } else {
-      setCurrentSession(updatedSessions[0]);
-    }
   };
 
-  const clearAllSessions = () => {
-    setGuestSessions([]);
-    setCurrentSession(null);
-    localStorage.removeItem('guestSessions');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-12 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <p className="ml-4 text-gray-600">Loading guest orders...</p>
+      </div>
+    );
+  }
 
   if (guestSessions.length === 0) {
     return (
@@ -77,148 +270,50 @@ export default function GuestOrderAccess({ setCurrentPage }: GuestOrderAccessPro
     );
   }
 
-  if (!currentSession) {
-    return (
-      <div className="min-h-screen bg-gray-100 py-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <Clock className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-800 mb-4">Session Expired</h1>
-            <p className="text-gray-600 mb-6">
-              Your guest sessions have expired. Guest sessions are valid for 24 hours after placing an order.
-            </p>
-            <button
-              onClick={() => setCurrentPage('shop')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              Place New Order
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const timeRemaining = Math.max(0, currentSession.expiresAt - Date.now());
-  const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
-  const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  // Removed the !currentSession (session expired) block as per user's request to not expire sessions.
+  // If the user wants to re-introduce session expiration, this block should be re-added.
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">Guest Order Access</h1>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Session expires in</p>
-              <p className="text-lg font-semibold text-orange-600">
-                {hoursRemaining}h {minutesRemaining}m
-              </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Guest Order Access</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold text-gray-800"></h1>
             </div>
-          </div>
 
-          {/* Order Selection */}
-          {guestSessions.length > 1 && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Order to View:
-              </label>
-              <select
-                value={currentSession.orderId}
-                onChange={(e) => {
-                  const selected = guestSessions.find(s => s.orderId === e.target.value);
-                  if (selected) setCurrentSession(selected);
-                }}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2"
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pending">
+                  Pending Orders ({pendingGuestOrders.length})
+                </TabsTrigger>
+                <TabsTrigger value="delivered">
+                  Delivered Orders ({deliveredGuestOrders.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="mt-6">
+                {renderGuestOrdersTable(pendingGuestOrders, "No pending orders found.")}
+              </TabsContent>
+
+              <TabsContent value="delivered" className="mt-6">
+                {renderGuestOrdersTable(deliveredGuestOrders, "No delivered orders found.")}
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end items-center mt-8">
+              <button
+                onClick={() => setCurrentPage('shop')}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
-                {guestSessions.map((session) => (
-                  <option key={session.orderId} value={session.orderId}>
-                    Order #{session.orderNumber} - {session.customerName}
-                  </option>
-                ))}
-              </select>
+                Place Another Order
+              </button>
             </div>
-          )}
-
-          {/* Order Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Package className="h-5 w-5 text-gray-600 mr-2" />
-                <span className="font-semibold text-gray-800">Order Details</span>
-              </div>
-              <p className="text-gray-600">Order #{currentSession.orderNumber}</p>
-              <p className="text-gray-600">Status: Pending</p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <User className="h-5 w-5 text-gray-600 mr-2" />
-                <span className="font-semibold text-gray-800">Customer Info</span>
-              </div>
-              <p className="text-gray-600">{currentSession.customerName}</p>
-              <p className="text-gray-600">{currentSession.customerEmail}</p>
-            </div>
-          </div>
-
-          {/* All Orders List */}
-          <div className="bg-gray-50 p-6 rounded-lg mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">All Your Orders</h3>
-            <div className="space-y-4">
-              {guestSessions.map((session) => (
-                <div key={session.orderId} className="border rounded-lg p-4 bg-white">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-800">Order #{session.orderNumber}</h4>
-                      <p className="text-sm text-gray-600">{session.customerName}</p>
-                      <p className="text-sm text-gray-600">Total: ${typeof session.orderData.total_amount === 'number' ? session.orderData.total_amount.toFixed(2) : session.orderData.total_amount}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">
-                        Expires: {new Date(session.expiresAt).toLocaleString()}
-                      </p>
-                      <button
-                        onClick={() => clearSession(session.orderId)}
-                        className="text-red-500 hover:text-red-700 text-sm mt-1"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Order Items */}
-                  <div className="space-y-2">
-                    {(typeof session.orderData.items === 'string' 
-                      ? JSON.parse(session.orderData.items) 
-                      : session.orderData.items
-                    ).map((item: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-700">{item.name} x {item.quantity}</span>
-                        <span className="font-semibold text-gray-800">${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <button
-              onClick={clearAllSessions}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              Clear All Sessions
-            </button>
-            <button
-              onClick={() => setCurrentPage('shop')}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              Place Another Order
-            </button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
-}
+  )};

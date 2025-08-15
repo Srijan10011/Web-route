@@ -66,11 +66,7 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
     const sessionsData = localStorage.getItem('guestSessions');
     if (sessionsData) {
       const sessions = JSON.parse(sessionsData);
-      // Check if any session is still valid
-      const validSessions = sessions.filter((session: any) => 
-        session.expiresAt > Date.now()
-      );
-      return validSessions.length > 0;
+      return sessions.length > 0; // Simply check if there are any sessions
     }
     return false;
   };

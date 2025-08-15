@@ -530,10 +530,32 @@ export const useOrderTrackingQuery = (orderNumber: string | null) => {
       if (!orderNumber) throw new Error("No order number provided");
       const { data, error } = await supabase
         .from("orders")
-        .select("status")
+        .select(`
+          *,
+          guest_order(
+            customer_name,
+            shipping_address,
+            customer_email
+          ),
+          customer_detail(
+            customer_name
+          ),
+          items
+        `)
         .eq("order_number", orderNumber)
         .single();
       if (error) throw error;
+
+      // Parse items if it's a string
+      if (data && typeof data.items === 'string') {
+        try {
+          data.items = JSON.parse(data.items);
+        } catch (parseError) {
+          console.error('Failed to parse items:', parseError);
+          data.items = []; // Default to empty array on parse error
+        }
+      }
+
       return data;
     },
     enabled: !!orderNumber,

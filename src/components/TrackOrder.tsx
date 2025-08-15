@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PackageSearch, RefreshCw } from 'lucide-react';
+import { PackageSearch, RefreshCw, CalendarDays } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useOrderTrackingQuery } from '../lib/utils';
 
@@ -8,6 +8,17 @@ export default function TrackOrder() {
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isTracking, setIsTracking] = useState(false);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   // Use React Query for data fetching with automatic refetching
   const { 
@@ -39,13 +50,7 @@ export default function TrackOrder() {
     }
   };
 
-  // Update order status when data changes
-  React.useEffect(() => {
-    if (order) {
-      setOrderStatus(`Your order status is: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`);
-      setErrorMessage(null);
-    }
-  }, [order]);
+  
 
   // Handle errors
   React.useEffect(() => {
@@ -60,53 +65,100 @@ export default function TrackOrder() {
   }, [orderError]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div>
-          <PackageSearch className="mx-auto h-12 w-auto text-green-600" />
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Track Your Order
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your order ID below to get the latest status.
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleTrackOrder}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="order-id" className="sr-only">
-                Order ID
-              </label>
-              <input
-                id="order-id"
-                name="order-id"
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your Order ID"
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {errorMessage && (
-            <p className="mt-2 text-center text-sm text-red-600">{errorMessage}</p>
-          )}
-          {orderStatus && (
-            <p className="mt-2 text-center text-sm text-green-600 font-medium">{orderStatus}</p>
-          )}
-
+    <>
+      <div className="bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
           <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Track Order
-            </button>
+            <PackageSearch className="mx-auto h-12 w-auto text-green-600" />
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Track Your Order
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Enter your order ID below to get the latest status.
+            </p>
           </div>
-        </form>
+          <form className="mt-8 space-y-6" onSubmit={handleTrackOrder}>
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <label htmlFor="order-id" className="sr-only">
+                  Order ID
+                </label>
+                <input
+                  id="order-id"
+                  name="order-id"
+                  type="text"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  placeholder="Enter your Order ID"
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {errorMessage && (
+              <p className="mt-2 text-center text-sm text-red-600">{errorMessage}</p>
+            )}
+
+            <div>
+              <button
+                type="submit"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Track Order
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {order && (
+        <div className="mt-8 p-6 bg-gray-100 rounded-lg shadow-inner overflow-x-auto max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Order Details</h3>
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Order #</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Customer</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Items</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Total</th>
+                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Order Date</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Status</th>
+              </tr>
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">{order.order_number || order.id}</td>
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">{order.customer_detail?.customer_name || order.guest_order?.customer_name || 'Guest'}</td>
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                      {order.items && order.items.length > 0 ? 
+                        order.items.map((item: any) => item.name).join(', ') : 
+                        'N/A'
+                      }
+                    </td>
+                </td>
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">{order.total_amount ? `${parseFloat(order.total_amount).toFixed(2)}` : '$0.00'}</td>
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <div>{order.order_date ? new Date(order.order_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</div>
+                      {/* You can add a relative time here if needed, e.g., "9 minutes ago" */}
+                    </div>
+                  </div>
+                </td>
+                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+                      <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${getStatusColor(order.status)}`}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </div>
+                    </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
+

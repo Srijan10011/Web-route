@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useProfileQuery, useUserAddressesQuery } from '../lib/utils';
-import MapPickerModal from './MapPickerModal';
+
 interface CheckoutProps {
   cart: any[];
   setCurrentPage: (page: string) => void;
@@ -27,7 +27,7 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [location, setLocation] = useState<string | null>(null);
-  const [showMapModal, setShowMapModal] = useState(false);
+
   // Get current user
   const [user, setUser] = useState<any>(null);
 
@@ -462,26 +462,14 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
                   <label className="block text-sm font-medium text-gray-700">State</label>
                   <input type="text" className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-[#FFFEFA]" value={state} onChange={(e) => setState(e.target.value)} />
                 </div>
-                <div className="md:col-span-2 flex space-x-2">
-                  <button onClick={getLocation} className="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold text-sm">
+                <div className="md:col-span-2">
+                  <button onClick={getLocation} className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold text-sm">
                     Use my location
-                  </button>
-                  <button onClick={() => setShowMapModal(true)} className="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold text-sm">
-                    Pick Location on Map
                   </button>
                   {location && <p className="mt-2 text-sm text-gray-500">Your location: {location}</p>}
                 </div>
               </div>
             </div>
-{showMapModal && (
-                      <MapPickerModal
-                        onClose={() => setShowMapModal(false)}
-                        onLocationSelect={(lat, lng) => {
-                          setLocation(`${lat}, ${lng}`);
-                          setShowMapModal(false);
-                        }}
-                      />
-                    )}
             <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

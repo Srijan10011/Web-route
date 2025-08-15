@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, MessageCircle, User, Calendar, Edit, Trash2, Upload } from 'lucide-react';
+import { Star, MessageCircle, User, Calendar, Edit, Trash2, Upload, Reply, CornerDownRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { 
@@ -275,9 +275,11 @@ const ReviewItem: React.FC<{
           <p className="text-gray-500 italic">No comment provided</p>
         )}
         {review.owner_reply && review.owner_reply.trim() && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="font-semibold text-blue-800">Owner's Reply:</p>
-            <p className="text-blue-700 leading-relaxed mt-1">{review.owner_reply}</p>
+          <div className="mt-2 ml-12"> {/* Adjusted margin to align with comments */}
+            <p className="font-semibold text-gray-800 flex items-center gap-1">
+              <CornerDownRight className="h-6 w-6 text-gray-500" /> Supplier's Reply:
+            </p> {/* Changed text and color */}
+            <p className="text-gray-700 leading-relaxed mt-1">{review.owner_reply}</p> {/* Removed blue color */}
             {isProductOwner && (
               <Button
                 variant="link"

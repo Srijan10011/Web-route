@@ -233,7 +233,7 @@ export const useProductQuery = (productId: number | null) => {
       if (!productId) throw new Error("No product ID provided");
       const { data, error } = await supabase
         .from("products")
-        .select("*, categories(id, name)")
+        .select("*, categories(id, name), product_owner_id")
         .eq("id", productId)
         .single();
       if (error) throw error;

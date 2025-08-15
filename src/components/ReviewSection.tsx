@@ -10,10 +10,12 @@ import {
   useSubmitReviewMutation,
   useUpdateReviewMutation,
   useDeleteReviewMutation,
+  useSubmitOwnerReplyMutation, // Import the new mutation
   Review 
 } from '../lib/reviewQueries';
 import { supabase } from '../lib/supabaseClient';
 import ImageModal from './ImageModal';
+import { useProductQuery } from '../lib/utils'; // Import useProductQuery
 
 interface ReviewSectionProps {
   productId: number;
@@ -200,10 +202,29 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingRevi
 const ReviewItem: React.FC<{ 
   review: Review; 
   isOwnReview: boolean; 
+  isProductOwner: boolean; // New prop
   onEdit?: () => void; 
   onDelete?: () => void;
-}> = ({ review, isOwnReview, onEdit, onDelete }) => {
+}> = ({ review, isOwnReview, isProductOwner, onEdit, onDelete }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showOwnerReplyForm, setShowOwnerReplyForm] = useState(false);
+  const [ownerReplyText, setOwnerReplyText] = useState(review.owner_reply || '');
+
+  const submitOwnerReplyMutation = useSubmitOwnerReplyMutation();
+
+  const handleSubmitOwnerReply = async () => {
+    if (!ownerReplyText.trim()) return;
+    try {
+      await submitOwnerReplyMutation.mutateAsync({
+        reviewId: review.id,
+        ownerReply: ownerReplyText,
+      });
+      setShowOwnerReplyForm(false);
+    } catch (error) {
+      console.error('Error submitting owner reply:', error);
+      alert('Failed to submit owner reply.');
+    }
+  };
 
   return (
     <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
@@ -253,6 +274,55 @@ const ReviewItem: React.FC<{
         ) : (
           <p className="text-gray-500 italic">No comment provided</p>
         )}
+        {review.owner_reply && review.owner_reply.trim() && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="font-semibold text-blue-800">Owner's Reply:</p>
+            <p className="text-blue-700 leading-relaxed mt-1">{review.owner_reply}</p>
+            {isProductOwner && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setShowOwnerReplyForm(true)}
+                className="text-blue-600 hover:text-blue-800 p-0 h-auto mt-2"
+              >
+                Edit Reply
+              </Button>
+            )}
+          </div>
+        )}
+
+        {isProductOwner && !review.owner_reply && !showOwnerReplyForm && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowOwnerReplyForm(true)}
+            className="mt-4"
+          >
+            Reply to Review
+          </Button>
+        )}
+
+        {isProductOwner && showOwnerReplyForm && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+            <h4 className="font-semibold mb-2">{review.owner_reply ? 'Edit Your Reply' : 'Write a Reply'}</h4>
+            <textarea
+              value={ownerReplyText}
+              onChange={(e) => setOwnerReplyText(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              placeholder="Type your reply here..."
+            />
+            <div className="flex justify-end space-x-2 mt-2">
+              <Button variant="outline" size="sm" onClick={() => setShowOwnerReplyForm(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSubmitOwnerReply} disabled={submitOwnerReplyMutation.isPending}>
+                {submitOwnerReplyMutation.isPending ? 'Submitting...' : 'Submit Reply'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {review.image_url && (
           <>
             <img 
@@ -277,6 +347,9 @@ const ReviewItem: React.FC<{
 export default function ReviewSection({ productId, userId }: ReviewSectionProps) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [editingReview, setEditingReview] = useState<any>(null);
+
+  const { data: product, isLoading: productLoading } = useProductQuery(productId);
+  const isProductOwner = userId && product?.product_owner_id === userId;
 
   const { data: canReview = false, isLoading: canReviewLoading } = useCanUserReviewQuery(userId, productId);
   const { data: userReview, isLoading: userReviewLoading } = useUserReviewQuery(userId, productId);
@@ -435,6 +508,7 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
                 key={review.id}
                 review={review}
                 isOwnReview={userReview?.id === review.id}
+                isProductOwner={isProductOwner} // Pass isProductOwner prop
                 onEdit={userReview?.id === review.id ? handleEditReview : undefined}
                 onDelete={userReview?.id === review.id ? handleDeleteReview : undefined}
               />

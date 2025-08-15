@@ -9,6 +9,7 @@ export interface Review {
   created_at: string;
   user_name: string;
   user_email: string;
+  owner_reply?: string; // New field for owner's reply
 }
 
 export interface ReviewStats {
@@ -192,6 +193,34 @@ export const useDeleteReviewMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['productReviews'] });
       queryClient.invalidateQueries({ queryKey: ['productReviewStats'] });
       queryClient.invalidateQueries({ queryKey: ['userReview'] });
+     },                                      // closes onSuccess object property
+  });                                       // closes object for useMutation
+};
+
+
+
+// Submit owner reply to a review
+export const useSubmitOwnerReplyMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ reviewId, ownerReply }: {
+      reviewId: number;
+      ownerReply: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ owner_reply: ownerReply, updated_at: new Date().toISOString() })
+        .eq('id', reviewId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-  });
+    onSuccess: (data) => {
+      // Invalidate product reviews to refetch with owner reply
+      queryClient.invalidateQueries({ queryKey: ['productReviews', data.product_id] });
+     },                                      // closes onSuccess object property
+  });                                       // closes object for useMutation
 };

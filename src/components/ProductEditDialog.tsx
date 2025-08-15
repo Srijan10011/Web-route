@@ -37,6 +37,7 @@ const productEditSchema = z.object({
     (val) => Number(val),
     z.number().int().min(0).optional()
   ),
+  product_owner_id: z.string().uuid("Invalid UUID format").optional(), // New field for product owner
 });
 
 type ProductEditForm = z.infer<typeof productEditSchema>;
@@ -71,6 +72,7 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
       badgeColor: product?.badgeColor || '',
       details: Array.isArray(product?.details) ? product.details : [],
       stockQuantity: product?.stockQuantity || 0,
+      product_owner_id: product?.product_owner_id || '', // Initialize with existing value
     },
   });
 
@@ -91,6 +93,7 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
           badgeColor: updatedProduct.badgeColor,
           details: updatedProduct.details ? [updatedProduct.details] : [],
           stockQuantity: updatedProduct.stockQuantity,
+          product_owner_id: updatedProduct.product_owner_id, // Include the new field
         })
         .eq('id', product.id);
       
@@ -240,6 +243,19 @@ const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                     <FormLabel>Badge Color</FormLabel>
                     <FormControl>
                       <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={productForm.control}
+                name="product_owner_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Owner ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter UUID of product owner" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

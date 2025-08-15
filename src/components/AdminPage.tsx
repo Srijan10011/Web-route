@@ -57,6 +57,7 @@ const productSchema = z.object({
     (val) => (typeof val === 'string' && val.length > 0 ? val.split(',').map(s => s.trim()) : []),
     z.array(z.string()).optional()
   ),
+  product_owner_id: z.string().uuid("Invalid UUID format").optional(), // New field for product owner
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -186,6 +187,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
           badge: newProduct.badge,
           badgeColor: newProduct.badgeColor,
           details: newProduct.details ? [newProduct.details] : [],
+          product_owner_id: newProduct.product_owner_id, // Include the new field
         },
       ]);
       if (error) throw error;
@@ -472,6 +474,19 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                           <FormLabel>Badge Color</FormLabel>
                           <FormControl>
                             <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="product_owner_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Product Owner ID</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter UUID of product owner" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

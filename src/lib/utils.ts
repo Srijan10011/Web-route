@@ -205,6 +205,26 @@ export const useProductsQuery = () => {
   });
 };
 
+// React Query hook for featured products
+export const useFeaturedProductsQuery = () => {
+  return useQuery({
+    queryKey: ["featuredProducts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_featured", true); // Fetch only featured products
+
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+};
+
 // React Query hook for a single product
 export const useProductQuery = (productId: number | null) => {
   return useQuery({

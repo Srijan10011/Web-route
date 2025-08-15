@@ -1,41 +1,6 @@
 import React from 'react';
 import { Star } from 'lucide-react';
-
-const products = [
-  {
-    id: 1,
-    name: 'Premium Dried Oyster Mushrooms',
-    description: 'Hand-selected oyster mushrooms, carefully dried to preserve nutrients and flavor.',
-    price: 24.99,
-    rating: 4.9,
-    reviews: 127,
-    image: 'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-    badge: 'Bestseller',
-    badgeColor: 'bg-orange-500'
-  },
-  {
-    id: 2,
-    name: 'Shiitake Mushroom Spawn Seeds',
-    description: 'Premium quality shiitake spawn seeds for home cultivation with detailed instructions.',
-    price: 18.99,
-    rating: 4.7,
-    reviews: 89,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-    badge: 'New',
-    badgeColor: 'bg-green-500'
-  },
-  {
-    id: 3,
-    name: 'Mushroom Cultivation Balls',
-    description: 'Complete cultivation kit in convenient ball form. Just add water and watch grow!',
-    price: 32.99,
-    rating: 5.0,
-    reviews: 203,
-    image: 'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1',
-    badge: null,
-    badgeColor: ''
-  }
-];
+import { useFeaturedProductsQuery } from '../lib/utils';
 
 function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
   return (
@@ -101,6 +66,38 @@ function ProductCard({ product, onProductClick, addToCart }: { product: any; onP
 }
 
 export default function FeaturedProducts({ setCurrentPage, setSelectedProductId, addToCart }: { setCurrentPage: (page: string) => void; setSelectedProductId: (id: number) => void; addToCart: (product: any) => void }) {
+  const { data: products, isLoading: loading, error } = useFeaturedProductsQuery();
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Featured Products
+            </h2>
+            <p>Loading...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Featured Products
+            </h2>
+            <p>Error loading products: {error.message}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -115,7 +112,7 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {products.map((product) => (
+          {products && products.map((product) => (
             <ProductCard key={product.id} product={product} onProductClick={(id) => {
               setSelectedProductId(id);
               setCurrentPage('product-detail');

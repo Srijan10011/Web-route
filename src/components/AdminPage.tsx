@@ -19,6 +19,9 @@ import { supabase } from '../lib/supabaseClient';
 import { useAdminOrdersQuery, useAdminProductsQuery, useCategoriesQuery, AdminOrder } from '../lib/utils';
 import { useTotalCustomersQuery } from '../lib/queries';
 import OrderStatusTabs from './OrderStatusTabs';
+import ProductEditDialog from './ProductEditDialog';
+import ProductViewDialog from './ProductViewDialog';
+import ProductCard from './ProductCard';
 
 // Mock API functions (replace with actual API calls)
 // Mock API functions (replace with actual API calls)
@@ -66,6 +69,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   // Mock authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -256,6 +262,27 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Product management handlers
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleViewProduct = (product: any) => {
+    setSelectedProduct(product);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleCloseViewDialog = () => {
+    setIsViewDialogOpen(false);
+    setSelectedProduct(null);
   };
 
   if (isLoading) {
@@ -609,33 +636,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {products?.map((product: any) => (
-                      <Card key={product.id} className="overflow-hidden">
-                        <img src={product.imageUrl} alt={product.name} className="w-full h-48 object-cover" />
-                        <CardContent className="p-4">
-                          <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                            {product.shortDescription}
-                          </p>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-bold text-primary-900">
-                              ${parseFloat(product.price).toFixed(2)}
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              Stock: {product.stockQuantity}
-                            </span>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onEdit={handleEditProduct}
+                        onView={handleViewProduct}
+                      />
                     ))}
                   </div>
                 )}
@@ -643,6 +649,26 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Product Edit Dialog */}
+        {selectedProduct && (
+          <ProductEditDialog
+            product={selectedProduct}
+            categories={categories || []}
+            isOpen={isEditDialogOpen}
+            onClose={handleCloseEditDialog}
+          />
+        )}
+
+        {/* Product View Dialog */}
+        {selectedProduct && (
+          <ProductViewDialog
+            product={selectedProduct}
+            categories={categories || []}
+            isOpen={isViewDialogOpen}
+            onClose={handleCloseViewDialog}
+          />
+        )}
       </div>
     </div>
   );

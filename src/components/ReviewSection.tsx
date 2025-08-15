@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, MessageCircle, User, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Star, MessageCircle, User, Calendar, Edit, Trash2, Upload } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { 
@@ -12,6 +12,8 @@ import {
   useDeleteReviewMutation,
   Review 
 } from '../lib/reviewQueries';
+import { supabase } from '../lib/supabaseClient';
+import ImageModal from './ImageModal';
 
 interface ReviewSectionProps {
   productId: number;
@@ -57,10 +59,17 @@ const StarRating = ({ rating, onRatingChange, readonly = false }: {
 const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingReview, onSuccess, onCancel }) => {
   const [rating, setRating] = useState(existingReview?.rating || 0);
   const [comment, setComment] = useState(existingReview?.comment || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submitReviewMutation = useSubmitReviewMutation();
   const updateReviewMutation = useUpdateReviewMutation();
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,19 +79,41 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingRevi
     }
 
     setIsSubmitting(true);
+    let imageUrl = existingReview?.image_url || '';
+
     try {
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${userId}_${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('review-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('review-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrlData.publicUrl;
+      }
+
       if (existingReview) {
         await updateReviewMutation.mutateAsync({
           reviewId: existingReview.id,
           rating,
-          comment
+          comment,
+          image_url: imageUrl,
         });
       } else {
         await submitReviewMutation.mutateAsync({
           userId,
           productId,
           rating,
-          comment
+          comment,
+          image_url: imageUrl,
         });
       }
       onSuccess?.();
@@ -124,6 +155,26 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingRevi
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Image (optional)
+          </label>
+          <div className="flex items-center space-x-4">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full"
+            />
+            {imageFile && (
+              <img src={URL.createObjectURL(imageFile)} alt="Preview" className="h-16 w-16 object-cover rounded-md" />
+            )}
+            {!imageFile && existingReview?.image_url && (
+              <img src={existingReview.image_url} alt="Existing review image" className="h-16 w-16 object-cover rounded-md" />
+            )}
+          </div>
+        </div>
+
         <div className="flex space-x-3">
           <Button
             type="submit"
@@ -152,8 +203,8 @@ const ReviewItem: React.FC<{
   onEdit?: () => void; 
   onDelete?: () => void;
 }> = ({ review, isOwnReview, onEdit, onDelete }) => {
-  console.log('ReviewItem - review data:', review); // Debug log
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
       <div className="flex justify-between items-start mb-3">
@@ -196,12 +247,27 @@ const ReviewItem: React.FC<{
         )}
       </div>
       
-      {/* Always show comment section, even if empty */}
       <div className="ml-12 mt-2">
         {review.comment && review.comment.trim() ? (
           <p className="text-gray-700 leading-relaxed">{review.comment}</p>
         ) : (
           <p className="text-gray-500 italic">No comment provided</p>
+        )}
+        {review.image_url && (
+          <>
+            <img 
+              src={review.image_url} 
+              alt="Review image" 
+              className="mt-4 rounded-lg w-48 cursor-pointer" 
+              onClick={() => setIsModalOpen(true)}
+            />
+            {isModalOpen && (
+              <ImageModal 
+                imageUrl={review.image_url} 
+                onClose={() => setIsModalOpen(false)} 
+              />
+            )}
+          </>
         )}
       </div>
     </div>
@@ -225,6 +291,7 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
           user_name: review.user_name,
           rating: review.rating,
           comment: review.comment,
+          image_url: review.image_url,
           comment_length: review.comment?.length || 0,
           comment_exists: !!review.comment
         });

@@ -183,7 +183,7 @@ export const useProductsQuery = () => {
   return useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*");
+      const { data, error } = await supabase.from("products").select("*, categories(id, name)");
       if (error) {
         throw error;
       }
@@ -233,7 +233,7 @@ export const useProductQuery = (productId: number | null) => {
       if (!productId) throw new Error("No product ID provided");
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("*, categories(id, name)")
         .eq("id", productId)
         .single();
       if (error) throw error;

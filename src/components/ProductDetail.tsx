@@ -10,9 +10,9 @@ interface Product {
   description: string;
   price: number;
   image: string;
-  category: string;
+  categories: { id: number; name: string; slug: string };
   rating: number;
-  stock: number;
+  stockQuantity: number;
   location: string;
 }
 
@@ -137,8 +137,8 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
             <div className="mb-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Product Details</h3>
               <ul className="list-disc list-inside text-gray-600 space-y-2">
-                <li>Category: {product.category}</li>
-                <li>Stock: {product.stock} units available</li>
+                <li>Category: {product.categories.name}</li>
+                <li>Stock: {product.stockQuantity} units available</li>
                 <li>Location: {product.location}</li>
               </ul>
             </div>

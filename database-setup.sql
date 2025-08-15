@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
@@ -71,7 +72,7 @@ CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews(created_at);
 -- Create function to check if user can review a product
 -- User can only review if they have a delivered order containing that product
 CREATE OR REPLACE FUNCTION can_user_review_product(p_user_id UUID, p_product_id INTEGER)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN AS $
 DECLARE
     has_delivered_order BOOLEAN := FALSE;
 BEGIN
@@ -105,7 +106,7 @@ BEGIN
     
     RETURN has_delivered_order;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create function to get product reviews with user details
 CREATE OR REPLACE FUNCTION get_product_reviews(p_product_id INTEGER)
@@ -113,16 +114,18 @@ RETURNS TABLE (
     id INTEGER,
     rating INTEGER,
     comment TEXT,
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE,
     user_name TEXT,
     user_email TEXT
-) AS $$
+) AS $
 BEGIN
     RETURN QUERY
     SELECT 
         r.id,
         r.rating,
         r.comment,
+        r.image_url,
         r.created_at,
         COALESCE(NULLIF(TRIM(p.first_name || ' ' || p.last_name), ''), 'Anonymous')::TEXT as user_name,
         COALESCE(au.email, '')::TEXT as user_email
@@ -132,7 +135,7 @@ BEGIN
     WHERE r.product_id = p_product_id
     ORDER BY r.created_at DESC;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create function to get average rating for a product
 CREATE OR REPLACE FUNCTION get_product_average_rating(p_product_id INTEGER)

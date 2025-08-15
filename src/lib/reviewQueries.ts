@@ -5,6 +5,7 @@ export interface Review {
   id: number;
   rating: number;
   comment: string;
+  image_url: string;
   created_at: string;
   user_name: string;
   user_email: string;
@@ -107,11 +108,12 @@ export const useSubmitReviewMutation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ userId, productId, rating, comment }: {
+    mutationFn: async ({ userId, productId, rating, comment, image_url }: {
       userId: string;
       productId: number;
       rating: number;
       comment: string;
+      image_url: string;
     }) => {
       const { data, error } = await supabase
         .from('reviews')
@@ -119,7 +121,8 @@ export const useSubmitReviewMutation = () => {
           user_id: userId,
           product_id: productId,
           rating,
-          comment
+          comment,
+          image_url
         })
         .select()
         .single();
@@ -141,16 +144,18 @@ export const useUpdateReviewMutation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ reviewId, rating, comment }: {
+    mutationFn: async ({ reviewId, rating, comment, image_url }: {
       reviewId: number;
       rating: number;
       comment: string;
+      image_url: string;
     }) => {
       const { data, error } = await supabase
         .from('reviews')
         .update({
           rating,
           comment,
+          image_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', reviewId)

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Star, MessageCircle, User, Calendar, Edit, Trash2, Upload, Reply, CornerDownRight } from 'lucide-react';
+import { MessageCircle, User, Calendar, Edit, Trash2, Upload, Reply, CornerDownRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import StarRating from './ui/StarRating';
 import { 
   useCanUserReviewQuery, 
   useUserReviewQuery, 
@@ -30,33 +31,6 @@ interface ReviewFormProps {
   onCancel?: () => void;
 }
 
-const StarRating = ({ rating, onRatingChange, readonly = false }: {
-  rating: number;
-  onRatingChange?: (rating: number) => void;
-  readonly?: boolean;
-}) => {
-  const [hoverRating, setHoverRating] = useState(0);
-
-  return (
-    <div className="flex items-center space-x-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`h-5 w-5 transition-colors ${
-            readonly ? '' : 'cursor-pointer'
-          } ${
-            star <= (hoverRating || rating)
-              ? 'text-yellow-400 fill-current'
-              : 'text-gray-300'
-          }`}
-          onClick={() => !readonly && onRatingChange?.(star)}
-          onMouseEnter={() => !readonly && setHoverRating(star)}
-          onMouseLeave={() => !readonly && setHoverRating(0)}
-        />
-      ))}
-    </div>
-  );
-};
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingReview, onSuccess, onCancel }) => {
   const [rating, setRating] = useState(existingReview?.rating || 0);
@@ -138,7 +112,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingRevi
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Rating *
           </label>
-          <StarRating rating={rating} onRatingChange={setRating} />
+          <StarRating rating={rating} onRatingChange={setRating} readonly={false} />
           {rating === 0 && (
             <p className="text-sm text-red-600 mt-1">Please select a rating</p>
           )}
@@ -236,7 +210,7 @@ const ReviewItem: React.FC<{
           <div>
             <p className="font-medium text-gray-900">{review.user_name}</p>
             <div className="flex items-center space-x-2">
-              <StarRating rating={review.rating} readonly />
+              <StarRating rating={review.rating} readonly size="sm" />
               <span className="text-sm text-gray-500">
                 {new Date(review.created_at).toLocaleDateString()}
               </span>
@@ -425,8 +399,13 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
         {reviewStats && (
           <div className="text-right">
             <div className="flex items-center space-x-2">
-              <StarRating rating={Math.round(reviewStats.average_rating)} readonly />
-              <span className="text-lg font-semibold">{reviewStats.average_rating.toFixed(1)}</span>
+              <StarRating 
+                rating={reviewStats.average_rating} 
+                readonly 
+                size="md" 
+                showValue 
+                reviewCount={reviewStats.review_count}
+              />
             </div>
             <p className="text-sm text-gray-600">{reviewStats.review_count} reviews</p>
           </div>

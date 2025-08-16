@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, Filter, Star, X, RefreshCw } from 'lucide-react';
+import { Search, Filter, X, RefreshCw } from 'lucide-react';
 import { useProductsQuery, useCategoriesQuery } from '../lib/utils';
+import { useProductsRatingsQuery } from '../lib/productRatingHooks';
+import StarRating from './ui/StarRating';
 
 interface Product {
   id: number;
@@ -16,25 +18,13 @@ interface Product {
   details?: string[];
 }
 
-function StarRating({ rating, reviews }: { rating: number; reviews: number }) {
-  return (
-    <div className="flex items-center space-x-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-sm text-gray-600">({rating}) {reviews} reviews</span>
-    </div>
-  );
-}
 
-function ProductCard({ product, onProductClick, addToCart }: { product: any; onProductClick: (id: number) => void; addToCart: (product: any) => void }) {
+function ProductCard({ product, onProductClick, addToCart, rating }: { 
+  product: any; 
+  onProductClick: (id: number) => void; 
+  addToCart: (product: any) => void;
+  rating?: { averageRating: number; reviewCount: number };
+}) {
   return (
     <div 
       className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full"
@@ -63,7 +53,13 @@ function ProductCard({ product, onProductClick, addToCart }: { product: any; onP
           
           <div className="flex items-center justify-between mb-4">
             <span className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
-            <StarRating rating={product.rating} reviews={product.reviews} />
+            <StarRating 
+              rating={rating?.averageRating || 0} 
+              readonly 
+              size="sm" 
+              showValue 
+              reviewCount={rating?.reviewCount || 0}
+            />
           </div>
         </div>
       </button>
@@ -89,6 +85,24 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
     error, 
     refetch 
   } = useProductsQuery();
+
+  // Get product IDs for rating queries
+  const productIds = useMemo(() => products.map(p => p.id), [products]);
+  
+  // Fetch ratings for all products
+  const { 
+    data: productRatings = [], 
+    isLoading: ratingsLoading 
+  } = useProductsRatingsQuery(productIds);
+
+  // Create a map of product ratings for easy lookup
+  const ratingsMap = useMemo(() => {
+    const map = new Map();
+    productRatings.forEach(rating => {
+      map.set(rating.productId, rating);
+    });
+    return map;
+  }, [productRatings]);
 
   // Function to manually refetch data
   const handleRefetch = useCallback(() => {
@@ -164,7 +178,11 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
       switch (sortBy) {
         case 'price-asc': return a.price - b.price;
         case 'price-desc': return b.price - a.price;
-        case 'rating': return b.rating - a.rating;
+        case 'rating': {
+          const aRating = ratingsMap.get(a.id)?.averageRating || 0;
+          const bRating = ratingsMap.get(b.id)?.averageRating || 0;
+          return bRating - aRating;
+        }
         case 'name':
         default: return a.name.localeCompare(b.name);
       }
@@ -362,10 +380,16 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
         ) : filteredAndSortedProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredAndSortedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onProductClick={(id) => {
-                setSelectedProductId(id);
-                setCurrentPage('product-detail');
-              }} addToCart={addToCart} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                rating={ratingsMap.get(product.id)}
+                onProductClick={(id) => {
+                  setSelectedProductId(id);
+                  setCurrentPage('product-detail');
+                }} 
+                addToCart={addToCart} 
+              />
             ))}
           </div>
         ) : (

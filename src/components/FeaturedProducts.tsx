@@ -11,7 +11,7 @@ function ProductCard({ product, onProductClick, addToCart, rating }: {
 }) {
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full"
+      className="group bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full"
     >
       <button onClick={() => onProductClick(product.id)} className="w-full">
         <div className="relative">
@@ -28,15 +28,15 @@ function ProductCard({ product, onProductClick, addToCart, rating }: {
         </div>
         
         <div className="p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
             {product.name}
           </h3>
-          <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm leading-relaxed">
             {product.description}
           </p>
           
           <div className="flex items-center justify-between mb-4">
-            <span className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">Rs {product.price.toFixed(2)}</span>
             <StarRating 
               rating={rating?.averageRating || 0} 
               readonly 
@@ -82,13 +82,13 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
 
   if (loading) {
     return (
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Featured Products
             </h2>
-            <p>Loading...</p>
+            <p className="text-gray-600 dark:text-gray-300">Loading...</p>
           </div>
         </div>
       </section>
@@ -97,13 +97,13 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
 
   if (error) {
     return (
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Featured Products
             </h2>
-            <p>Error loading products: {error.message}</p>
+            <p className="text-gray-600 dark:text-gray-300">Error loading products: {error.message}</p>
           </div>
         </div>
       </section>
@@ -111,13 +111,13 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
   }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Featured Products
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Discover our most popular mushroom products, carefully selected for
             quality and freshness
           </p>
@@ -147,5 +147,5 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
         </div>
       </div>
     </section>
-  );
-}
+ );
+  }

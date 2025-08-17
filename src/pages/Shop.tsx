@@ -17,7 +17,7 @@ const Shop = () => {
           <div key={product.id} className="bg-white p-6 rounded-lg shadow-md">
             <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4 rounded-md" />
             <h2 className="text-2xl font-semibold mb-2">{product.name}</h2>
-            <p className="text-lg text-gray-600 mb-4">${product.price}</p>
+            <p className="text-sm text-gray-600 mb-4">Rs {product.price}</p>
             <button className="bg-yellow-500 text-white py-2 px-4 rounded-full w-full hover:bg-yellow-600">
               Add to Cart
             </button>

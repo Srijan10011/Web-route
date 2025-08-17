@@ -14,7 +14,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onView }) =>
   const productDescription = product.description || product.shortDescription || 'No description available';
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 bg-white dark:bg-gray-700">
       <div className="relative">
         <img 
           src={productImage} 
@@ -38,26 +38,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onView }) =>
       <CardContent className="p-4">
         <div className="space-y-3">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
               {product.name}
             </h3>
-            <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-1">
               {productDescription}
             </p>
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-green-600">
-              ${parseFloat(product.price || 0).toFixed(2)}
+            <span className="text-lg font-bold text-green-600 dark:text-green-400">
+              Rs {parseFloat(product.price || 0).toFixed(2)}
             </span>
-            <div className="flex items-center space-x-1 text-sm text-gray-500">
+            <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
               <Star className="h-3 w-3 text-yellow-400 fill-current" />
               <span>{product.rating || 0}</span>
               <span>({product.reviews || 0})</span>
             </div>
           </div>
           
-          <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
             <span>Stock: {product.stockQuantity || 0}</span>
             <span>ID: {product.id}</span>
           </div>
@@ -66,7 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onView }) =>
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex-1"
+              className="flex-1 dark:text-white dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
               onClick={() => onEdit(product)}
             >
               <Edit className="h-4 w-4 mr-1" />
@@ -75,7 +75,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onView }) =>
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex-1"
+              className="flex-1 dark:text-white dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
               onClick={() => onView(product)}
             >
               <Eye className="h-4 w-4 mr-1" />

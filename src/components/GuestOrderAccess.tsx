@@ -208,13 +208,13 @@ export default function GuestOrderAccess({ setCurrentPage }: GuestOrderAccessPro
                   ).map((item: any, idx: number) => (
                     <div key={idx} className="text-sm">
                       <p>{item.name} (x{item.quantity})</p>
-                      {item.price && <p className="text-xs text-gray-500">${item.price}</p>}
+                      {item.price && <p className="text-xs text-gray-500">Rs {item.price}</p>}
                     </div>
                   ))}
                 </div>
               </TableCell>
               <TableCell className="font-semibold">
-                ${parseFloat(session.orderData.total_amount).toFixed(2)}
+                Rs {parseFloat(session.orderData.total_amount).toFixed(2)}
               </TableCell>
               <TableCell>
                 <div className="flex flex-col">

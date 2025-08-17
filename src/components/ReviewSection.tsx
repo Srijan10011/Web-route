@@ -102,37 +102,37 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ productId, userId, existingRevi
   };
 
   return (
-    <div className="bg-gray-50 p-6 rounded-lg border">
-      <h3 className="text-lg font-semibold mb-4">
+    <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border dark:border-gray-700">
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
         {existingReview ? 'Update Your Review' : 'Write a Review'}
       </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Rating *
           </label>
           <StarRating rating={rating} onRatingChange={setRating} readonly={false} />
           {rating === 0 && (
-            <p className="text-sm text-red-600 mt-1">Please select a rating</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Please select a rating</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Comment
           </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             placeholder="Share your experience with this product..."
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
             Image (optional)
           </label>
           <div className="flex items-center space-x-4">
@@ -201,17 +201,17 @@ const ReviewItem: React.FC<{
   };
 
   return (
-    <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
+    <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 last:border-b-0">
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-            <User className="h-5 w-5 text-green-600" />
+          <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+            <User className="h-5 w-5 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">{review.user_name}</p>
+            <p className="font-medium text-gray-900 dark:text-white">{review.user_name}</p>
             <div className="flex items-center space-x-2">
               <StarRating rating={review.rating} readonly size="sm" />
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(review.created_at).toLocaleDateString()}
               </span>
             </div>
@@ -244,16 +244,16 @@ const ReviewItem: React.FC<{
       
       <div className="ml-12 mt-2">
         {review.comment && review.comment.trim() ? (
-          <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+          <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{review.comment}</p>
         ) : (
-          <p className="text-gray-500 italic">No comment provided</p>
+          <p className="text-gray-500 dark:text-gray-400 italic">No comment provided</p>
         )}
         {review.owner_reply && review.owner_reply.trim() && (
           <div className="mt-2 ml-12"> {/* Adjusted margin to align with comments */}
-            <p className="font-semibold text-gray-800 flex items-center gap-1">
-              <CornerDownRight className="h-6 w-6 text-gray-500" /> Supplier's Reply:
+            <p className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-1">
+              <CornerDownRight className="h-6 w-6 text-gray-500 dark:text-gray-400" /> Supplier's Reply:
             </p> {/* Changed text and color */}
-            <p className="text-gray-700 leading-relaxed mt-1">{review.owner_reply}</p> {/* Removed blue color */}
+            <p className="text-gray-700 dark:text-gray-200 leading-relaxed mt-1">{review.owner_reply}</p> {/* Removed blue color */}
             {isProductOwner && (
               <Button
                 variant="link"
@@ -279,13 +279,13 @@ const ReviewItem: React.FC<{
         )}
 
         {isProductOwner && showOwnerReplyForm && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
-            <h4 className="font-semibold mb-2">{review.owner_reply ? 'Edit Your Reply' : 'Write a Reply'}</h4>
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600">
+            <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">{review.owner_reply ? 'Edit Your Reply' : 'Write a Reply'}</h4>
             <textarea
               value={ownerReplyText}
               onChange={(e) => setOwnerReplyText(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               placeholder="Type your reply here..."
             />
             <div className="flex justify-end space-x-2 mt-2">
@@ -395,7 +395,7 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Customer Reviews</h2>
         {reviewStats && (
           <div className="text-right">
             <div className="flex items-center space-x-2">
@@ -407,7 +407,7 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
                 reviewCount={reviewStats.review_count}
               />
             </div>
-            <p className="text-sm text-gray-600">{reviewStats.review_count} reviews</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">{reviewStats.review_count} reviews</p>
           </div>
         )}
       </div>
@@ -416,10 +416,10 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
       {userId && (
         <div className="mb-8">
           {!canReview && !userReview && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <MessageCircle className="h-5 w-5 text-yellow-600" />
-                <p className="text-yellow-800">
+                <MessageCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <p className="text-yellow-800 dark:text-yellow-200">
                   You can only review products from your delivered orders.
                 </p>
               </div>
@@ -436,9 +436,9 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
           )}
 
           {userReview && !showReviewForm && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
               <div className="flex justify-between items-center">
-                <p className="text-blue-800">You have already reviewed this product.</p>
+                <p className="text-blue-800 dark:text-blue-200">You have already reviewed this product.</p>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
@@ -479,8 +479,8 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
       <div>
         {reviews.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
+            <MessageCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300">No reviews yet. Be the first to review this product!</p>
           </div>
         ) : (
           <div className="space-y-4">

@@ -59,6 +59,20 @@ function App() {
   const [cart, setCart] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   const refetchCart = async () => {
     if (session?.user) {
@@ -247,7 +261,7 @@ function App() {
       case 'about':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <About setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -255,7 +269,7 @@ function App() {
       case 'shop':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Shop setCurrentPage={setCurrentPage} setSelectedProductId={setSelectedProductId} addToCart={addToCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -263,7 +277,7 @@ function App() {
       case 'contact':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Contact />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -271,7 +285,7 @@ function App() {
       case 'track-order':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <TrackOrder />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -279,7 +293,7 @@ function App() {
       case 'product-detail':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <ProductDetail productId={selectedProductId} setCurrentPage={setCurrentPage} addToCart={addToCart} session={session} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -287,7 +301,7 @@ function App() {
       case 'profile':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Profile session={session} setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -295,7 +309,7 @@ function App() {
       case 'update-profile':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <UpdateProfile setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -303,7 +317,7 @@ function App() {
       case 'cart':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Cart cart={cart} setCurrentPage={setCurrentPage} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -311,7 +325,7 @@ function App() {
       case 'checkout':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Checkout cart={cart} setCurrentPage={setCurrentPage} session={session} clearCart={clearCart} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -319,7 +333,7 @@ function App() {
       case 'admin':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <AdminPage setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -327,7 +341,7 @@ function App() {
       case 'guestOrder':
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <GuestOrderAccess setCurrentPage={setCurrentPage} />
             <Footer setCurrentPage={setCurrentPage} />
           </div>
@@ -336,7 +350,7 @@ function App() {
       default:
         return (
           <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} />
+            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
             <Hero setCurrentPage={setCurrentPage} setModal={setModal} session={session} />
             <Features />
             <FeaturedProducts setCurrentPage={setCurrentPage} setSelectedProductId={setSelectedProductId} addToCart={addToCart} />

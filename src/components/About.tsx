@@ -61,17 +61,17 @@ const values = [
 
 export default function About({ setCurrentPage }: { setCurrentPage: (page: string) => void }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
       <section className="relative min-h-[500px] flex items-center justify-center bg-cover bg-center bg-no-repeat"
                style={{
                  backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")'
                }}>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
             Our Story
           </h1>
-          <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
             From a small family farm to a trusted source of premium organic mushrooms, 
             discover the passion and dedication behind FreshShroom.
           </p>
@@ -79,15 +79,15 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-green-600 mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-2">
                   {stat.number}
                 </div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -95,20 +95,20 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
       </section>
 
       {/* Main Story Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                 From Our Farm to Your Table
               </h2>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                 FreshShroom began in 1999 when Sarah Mitchell inherited her grandmother's small farm 
                 in the rolling hills of Oregon. What started as a hobby growing shiitake mushrooms 
                 in her backyard has grown into one of the most trusted organic mushroom suppliers 
                 in the Pacific Northwest.
               </p>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
                 Our family-owned farm has been cultivating premium mushrooms for over two decades, 
                 using sustainable farming practices that respect both nature and tradition. We believe 
                 that the best mushrooms come from healthy soil, clean water, and careful attention 
@@ -118,10 +118,10 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
               <div className="space-y-4 mb-8">
                 {certifications.map((cert, index) => (
                   <div key={index} className="flex items-center space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <Check className="h-4 w-4 text-green-600" />
+                    <div className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                     </div>
-                    <span className="text-gray-700 font-medium">{cert}</span>
+                    <span className="text-gray-700 dark:text-gray-200 font-medium">{cert}</span>
                   </div>
                 ))}
               </div>
@@ -153,25 +153,25 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
       </section>
 
       {/* Values Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Our Values
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Everything we do is guided by our core values and commitment to excellence
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
-              <div key={index} className="text-center p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div key={index} className="text-center p-6 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                 <div className="flex justify-center mb-4">
                   {value.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{value.title}</h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
@@ -179,28 +179,28 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
       </section>
 
       {/* Team Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Meet Our Team
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               The passionate people behind FreshShroom who make our mission possible
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-green-600 font-bold text-xl">
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow text-center">
+                <div className="w-20 h-20 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-green-600 dark:text-green-400 font-bold text-xl">
                     {member.initials}
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
-                <p className="text-green-600 font-medium mb-4">{member.role}</p>
-                <p className="text-gray-600 leading-relaxed">{member.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{member.name}</h3>
+                <p className="text-green-600 dark:text-green-400 font-medium mb-4">{member.role}</p>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{member.description}</p>
               </div>
             ))}
           </div>
@@ -227,12 +227,12 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Ready to Experience FreshShroom?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
             Join thousands of customers who trust us for their mushroom needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -244,7 +244,7 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
             </button>
             <button 
               onClick={() => setCurrentPage('contact')}
-              className="bg-white hover:bg-gray-50 text-gray-900 px-8 py-3 rounded-lg font-semibold border border-gray-300 transition-colors"
+              className="bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-8 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 transition-colors"
             >
               Contact Us
             </button>

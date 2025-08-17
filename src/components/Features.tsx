@@ -10,7 +10,7 @@ const features = [
   {
     icon: <Truck className="h-12 w-12 text-green-600" />,
     title: 'Free Delivery',
-    description: 'Fast and free shipping on all orders over $50'
+    description: 'Fast and free shipping on all orders over Rs 50'
   },
   {
     icon: <Shield className="h-12 w-12 text-green-600" />,
@@ -26,7 +26,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
@@ -34,8 +34,8 @@ export default function Features() {
               <div className="flex justify-center mb-4">
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-              <p className="text-gray-600 text-sm">{feature.description}</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">{feature.description}</p>
             </div>
           ))}
         </div>

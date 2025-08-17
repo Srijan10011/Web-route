@@ -52,7 +52,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         ))}
       </div>
       {showValue && (
-        <span className={`${textSizeClasses[size]} text-gray-600`}>
+        <span className={`${textSizeClasses[size]} text-gray-600 dark:text-gray-300`}>
           ({rating.toFixed(1)})
           {reviewCount !== undefined && ` ${reviewCount} review${reviewCount !== 1 ? 's' : ''}`}
         </span>

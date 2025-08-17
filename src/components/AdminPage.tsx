@@ -289,18 +289,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <p className="text-gray-600">Loading admin panel...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-300">Loading admin panel...</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600">Please log in to view the admin panel.</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Access Denied</h2>
+          <p className="text-gray-600 dark:text-gray-300">Please log in to view the admin panel.</p>
         </div>
       </div>
     );
@@ -308,10 +308,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
   if (userRole !== 'admin') {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600">You do not have administrative privileges to access this page.</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Access Denied</h2>
+          <p className="text-gray-600 dark:text-gray-300">You do not have administrative privileges to access this page.</p>
         </div>
       </div>
     );
@@ -323,9 +323,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
   const pendingOrders = orders?.filter(order => order.status === 'pending').length || 0;
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Admin Dashboard</h1>
 
         {/* Refresh Buttons */}
         <div className="flex gap-4 mb-6">
@@ -333,6 +333,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
             onClick={handleRefetchOrders} 
             disabled={ordersLoading}
             variant="outline"
+            className="dark:text-white dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
           >
             {ordersLoading ? 'Refreshing...' : 'Refresh Orders'}
           </Button>
@@ -340,39 +341,40 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
             onClick={handleRefetchProducts} 
             disabled={productsLoading}
             variant="outline"
+            className="dark:text-white dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
           >
             {productsLoading ? 'Refreshing...' : 'Refresh Products'}
           </Button>
         </div>
 
         {/* Debug Info */}
-        <div className="bg-gray-100 p-4 rounded-lg mb-6">
-          <h3 className="font-semibold mb-2">Debug Information:</h3>
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-6">
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Debug Information:</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
+            <div className="text-gray-700 dark:text-gray-200">
               <span className="font-medium">Authenticated:</span> {isAuthenticated ? 'Yes' : 'No'}
             </div>
-            <div>
+            <div className="text-gray-700 dark:text-gray-200">
               <span className="font-medium">User Role:</span> {userRole || 'None'}
             </div>
-            <div>
+            <div className="text-gray-700 dark:text-gray-200">
               <span className="font-medium">Orders Count:</span> {orders?.length || 0}
             </div>
-            <div>
+            <div className="text-gray-700 dark:text-gray-200">
               <span className="font-medium">Orders Loading:</span> {ordersLoading ? 'Yes' : 'No'}
             </div>
           </div>
           {ordersError && (
-            <div className="mt-2 text-red-600">
+            <div className="mt-2 text-red-600 dark:text-red-400">
               <span className="font-medium">Orders Error:</span> {ordersError.message}
             </div>
           )}
           {orders && orders.length > 0 && orders[0]._note && (
-            <div className="mt-2 text-blue-600 text-xs">
+            <div className="mt-2 text-blue-600 dark:text-blue-400 text-xs">
               <strong>Database Note:</strong> {orders[0]._note}
             </div>
           )}
-          <div className="mt-2 text-blue-600 text-xs">
+          <div className="mt-2 text-blue-600 dark:text-blue-400 text-xs">
             <strong>Note:</strong> If you see "No items details available", the orders table may not have an items field or the order_items table may not exist.
           </div>
         </div>
@@ -382,10 +384,10 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
             <DialogTrigger asChild>
               <Button>Add New Product</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] bg-slate-50 border-blue-100">
+            <DialogContent className="sm:max-w-[600px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
-                <DialogDescription>Fill in the product details below and click Add Product to save.</DialogDescription>
+                <DialogDescription className="text-gray-600 dark:text-gray-300">Fill in the product details below and click Add Product to save.</DialogDescription>
               </DialogHeader>
               <Form {...productForm}>
                 <form onSubmit={productForm.handleSubmit(onSubmitProduct)} className="space-y-4">
@@ -395,9 +397,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Name</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Product Name</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -408,14 +410,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Category</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                                 <SelectValue placeholder="Select a category" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600">
                               {categories?.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
@@ -432,9 +434,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="rating"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Rating</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Rating</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.1" min="0" max="5" {...field} />
+                            <Input type="number" step="0.1" min="0" max="5" {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -445,9 +447,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="reviews"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Number of Reviews</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Number of Reviews</FormLabel>
                           <FormControl>
-                            <Input type="number" min="0" {...field} />
+                            <Input type="number" min="0" {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -458,9 +460,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="badge"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Badge Text</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Badge Text</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -471,9 +473,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="badgeColor"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Badge Color</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Badge Color</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -484,9 +486,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                       name="product_owner_id"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Owner ID</FormLabel>
+                          <FormLabel className="text-gray-700 dark:text-gray-200">Product Owner ID</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Enter UUID of product owner" />
+                            <Input {...field} placeholder="Enter UUID of product owner" className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -498,9 +500,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel className="text-gray-700 dark:text-gray-200">Price</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" {...field} />
+                          <Input type="number" step="0.01" {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -511,9 +513,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Description</FormLabel>
+                        <FormLabel className="text-gray-700 dark:text-gray-200">Full Description</FormLabel>
                         <FormControl>
-                          <Textarea {...field} />
+                          <Textarea {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -525,9 +527,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     name="details"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Product Details</FormLabel>
+                        <FormLabel className="text-gray-700 dark:text-gray-200">Product Details</FormLabel>
                         <FormControl>
-                          <Textarea {...field} />
+                          <Textarea {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -543,9 +545,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
                     name="image"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Image URL</FormLabel>
+                        <FormLabel className="text-gray-700 dark:text-gray-200">Image URL</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -564,57 +566,57 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-primary-900">{totalOrders}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Orders</p>
+                  <p className="text-2xl font-bold text-primary-900 dark:text-white">{totalOrders}</p>
                   {ordersError && (
-                    <p className="text-xs text-red-600 mt-1">Error: {ordersError.message}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">Error: {ordersError.message}</p>
                   )}
                 </div>
-                <ShoppingCart className="h-8 w-8 text-primary-500" />
+                <ShoppingCart className="h-8 w-8 text-primary-500 dark:text-primary-400" />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-primary-900">{totalProducts}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Products</p>
+                  <p className="text-2xl font-bold text-primary-900 dark:text-white">{totalProducts}</p>
                 </div>
-                <Package className="h-8 w-8 text-primary-500" />
+                <Package className="h-8 w-8 text-primary-500 dark:text-primary-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                  <p className="text-2xl font-bold text-primary-900">{customersLoading ? '...' : totalCustomers}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Customers</p>
+                  <p className="text-2xl font-bold text-primary-900 dark:text-white">{customersLoading ? '...' : totalCustomers}</p>
                   {customersError && (
-                    <p className="text-xs text-red-600 mt-1">Error: {customersError.message}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">Error: {customersError.message}</p>
                   )}
                 </div>
-                <Users className="h-8 w-8 text-primary-500" />
+                <Users className="h-8 w-8 text-primary-500 dark:text-primary-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Orders</p>
-                  <p className="text-2xl font-bold text-primary-900">{pendingOrders}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Pending Orders</p>
+                  <p className="text-2xl font-bold text-primary-900 dark:text-white">{pendingOrders}</p>
                 </div>
-                <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <span className="text-yellow-600 text-lg">⏳</span>
+                <div className="h-8 w-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+                  <span className="text-yellow-600 dark:text-yellow-400 text-lg">⏳</span>
                 </div>
               </div>
             </CardContent>
@@ -623,9 +625,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
         {/* Main Content */}
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="orders">Recent Orders</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-700">
+            <TabsTrigger value="orders" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-300">
+              Recent Orders
+            </TabsTrigger>
+            <TabsTrigger value="products" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=inactive]:text-gray-600 dark:data-[state=inactive]:text-gray-300">
+              Products
+            </TabsTrigger>
           </TabsList>
 
           {/* Orders Tab */}
@@ -639,14 +645,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ setCurrentPage }) => {
 
           {/* Products Tab */}
           <TabsContent value="products">
-            <Card>
+            <Card className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
               <CardHeader>
                 <CardTitle>Product Management</CardTitle>
               </CardHeader>
               <CardContent>
                 {products?.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">No products found. Add some using the button above.</p>
+                    <p className="text-gray-500 dark:text-gray-400">No products found. Add some using the button above.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

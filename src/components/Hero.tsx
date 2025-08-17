@@ -14,12 +14,12 @@ export default function Hero({ setCurrentPage, setModal, session }: HeroProps) {
                backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")'
              }}>
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+        <h1 className="text-4xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
           Fresh, Organic<br />
           Mushrooms <span className="text-orange-400">From Farm<br />
           to Home</span>
         </h1>
-        <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
           Discover premium quality dried mushrooms, spawn seeds, and
           cultivation kits. Grown with love, delivered with care.
         </p>

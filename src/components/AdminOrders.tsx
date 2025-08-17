@@ -138,7 +138,7 @@ const AdminOrders: React.FC = () => {
               <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-100">
                 <td className="py-3 px-4">{order.id}</td>
                 <td className="py-3 px-4">{order.customerName}</td>
-                <td className="py-3 px-4">${order.total.toFixed(2)}</td>
+                <td className="py-3 px-4">Npr.{order.total.toFixed(2)}</td>
                 <td className="py-3 px-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold ${

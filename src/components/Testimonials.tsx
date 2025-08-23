@@ -34,7 +34,7 @@ function StarRating({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 ${
+          className={`h-5 w-5 sm:h-6 sm:w-6 ${
             star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
           }`}
         />

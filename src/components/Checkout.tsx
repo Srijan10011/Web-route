@@ -32,6 +32,10 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     async function getCurrentUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);

@@ -73,7 +73,7 @@ export default function Signup({ setModal }: SignupProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg relative">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
         <button onClick={() => setModal(null)} className="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
           <X className="h-6 w-6" />
         </button>

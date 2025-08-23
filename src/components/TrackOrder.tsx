@@ -65,7 +65,7 @@ export default function TrackOrder() {
   }, [orderError]);
 
   return (
-    <>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg">
           <div>
@@ -113,52 +113,55 @@ export default function TrackOrder() {
       </div>
 
       {order && (
-        <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner overflow-x-auto max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner overflow-x-auto">
           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Order Details</h3>
-          <table className="w-full caption-bottom text-sm">
-            <thead className="[&_tr]:border-b border-gray-200 dark:border-gray-700">
-              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Order #</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Customer</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Items</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Total</th>
-                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Order Date</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Status</th>
-              </tr>
-            </thead>
-            <tbody className="[&_tr:last-child]:border-0">
-              <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted border-gray-200 dark:border-gray-700">
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white">{order.order_number || order.id}</td>
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white">{order.customer_detail?.customer_name || order.guest_order?.customer_name || 'Guest'}</td>
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white">
-                      {order.items && order.items.length > 0 ? 
-                        order.items.map((item: any) => item.name).join(', ') : 
-                        'N/A'
-                      }
-                    </td>
-                </td>
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white">{order.total_amount ? `Rs {parseFloat(order.total_amount).toFixed(2)}` : 'Rs 0.00'}</td>
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <div className="text-gray-900 dark:text-white">
-                      <div>{order.order_date ? new Date(order.order_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</div>
-                      {/* You can add a relative time here if needed, e.g., "9 minutes ago" */}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0">
-                      <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${getStatusColor(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          <div className="overflow-x-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b border-gray-200 dark:border-gray-700 hidden md:table-header-group">
+                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Order #</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Customer</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Items</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Total</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Order Date</th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-gray-300 [&:has([role=checkbox])]:pr-0">Status</th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
+                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted border-gray-200 dark:border-gray-700 flex flex-col md:table-row">
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white md:table-cell"><span className="font-bold md:hidden">Order #: </span>{order.order_number || order.id}</td>
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white md:table-cell"><span className="font-bold md:hidden">Customer: </span>{order.customer_detail?.customer_name || order.guest_order?.customer_name || 'Guest'}</td>
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 md:table-cell">
+                    <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white">
+                        <span className="font-bold md:hidden">Items: </span>
+                        {order.items && order.items.length > 0 ? 
+                          order.items.map((item: any) => item.name).join(', ') : 
+                          'N/A'
+                        }
+                      </td>
+                  </td>
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 text-gray-900 dark:text-white md:table-cell"><span className="font-bold md:hidden">Total: </span>{order.total_amount ? `Rs {parseFloat(order.total_amount).toFixed(2)}` : 'Rs 0.00'}</td>
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 md:table-cell">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <div className="text-gray-900 dark:text-white">
+                        <div><span className="font-bold md:hidden">Order Date: </span>{order.order_date ? new Date(order.order_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</div>
+                        {/* You can add a relative time here if needed, e.g., "9 minutes ago" */}
                       </div>
-                    </td>
-              </tr>
-            </tbody>
-          </table>
+                    </div>
+                  </td>
+                  <td className="p-4 align-middle [&:has([role=checkbox])]:pr-0 md:table-cell">
+                        <span className="font-bold md:hidden">Status: </span>
+                        <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${getStatusColor(order.status)}`}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </div>
+                      </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
-

@@ -63,18 +63,33 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="relative min-h-[500px] flex items-center justify-center bg-cover bg-center bg-no-repeat"
-               style={{
-                 backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")'
-               }}>
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
-            Our Story
-          </h1>
-          <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
-            From a small family farm to a trusted source of premium organic mushrooms, 
-            discover the passion and dedication behind FreshShroom.
-          </p>
+      <section className="relative">
+        <picture>
+          <source
+            media="(min-width: 1280px)"
+            srcSet="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+          />
+          <source
+            media="(min-width: 768px)"
+            srcSet="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1280&h=720&dpr=1"
+          />
+          <img
+            src="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&dpr=1"
+            alt="A lush green valley with a river running through it"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="relative z-10 min-h-[500px] flex items-center justify-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
+              Our Story
+            </h1>
+            <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+              From a small family farm to a trusted source of premium organic mushrooms, 
+              discover the passion and dedication behind FreshShroom.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -129,23 +144,29 @@ export default function About({ setCurrentPage }: { setCurrentPage: (page: strin
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4">
-                <img 
-                  src="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=300&h=400&dpr=1"
-                  alt="Fresh vegetables"
-                  className="w-full h-64 object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                />
-                <img 
-                  src="https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&dpr=1"
-                  alt="Landscape"
-                  className="w-full h-32 object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                />
+                <div className="aspect-w-3 aspect-h-4">
+                  <img 
+                    src="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=300&h=400&dpr=1"
+                    alt="Fresh vegetables"
+                    className="w-full h-full object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                  />
+                </div>
+                <div className="aspect-w-3 aspect-h-2">
+                  <img 
+                    src="https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&dpr=1"
+                    alt="Landscape"
+                    className="w-full h-full object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                  />
+                </div>
               </div>
               <div className="mt-8">
-                <img 
-                  src="https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=300&h=500&dpr=1"
-                  alt="Mountain landscape"
-                  className="w-full h-80 object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                />
+                <div className="aspect-w-3 aspect-h-5">
+                  <img 
+                    src="https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=300&h=500&dpr=1"
+                    alt="Mountain landscape"
+                    className="w-full h-full object-cover rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                  />
+                </div>
               </div>
             </div>
           </div>

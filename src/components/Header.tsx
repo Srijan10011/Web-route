@@ -61,6 +61,9 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error logging out:", error.message);
+    } else {
+      setCurrentPage('home');
+      window.scrollTo(0, 0);
     }
   };
 
@@ -83,8 +86,8 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
               onClick={() => setCurrentPage?.('home')}
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <Leaf className="h-8 w-8 text-green-600" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">FreshShroom</span>
+              <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
+              <span className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">FreshShroom</span>
             </button>
           </div>
           
@@ -125,107 +128,139 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
+          <div className="flex items-center">
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5 md:h-6 md:w-6" />
+                ) : (
+                  <Sun className="h-5 w-5 md:h-6 md:w-6" />
+                )}
+              </button>
 
-          <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? (
-                <Moon className="h-6 w-6" />
+              {/* Connection Status Indicator */}
+              <div className="flex items-center space-x-1">
+                {isConnected ? (
+                  <Wifi className="h-4 w-4 text-green-600" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-600" />
+                )}
+              </div>
+              
+              {session ? (
+                <>
+                  {setCurrentPage && (
+                    <button
+                      onClick={() => setCurrentPage('profile')}
+                      className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center space-x-1"
+                    >
+                      <User className="h-5 w-5 md:h-6 md:w-6" />
+                      <span className="hidden sm:inline">Profile</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setCurrentPage?.('cart')}
+                    className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
+                    {cart.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </button>
+                  <button 
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
-                <Sun className="h-6 w-6" />
+                <>
+                  <button 
+                    onClick={() => setModal('login')}
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Login
+                  </button>
+                  <button 
+                    onClick={() => setModal('signup')}
+                    className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Signup
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage?.('cart')}
+                    className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
+                    {cart.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </button>
+                </>
               )}
-            </button>
-
-            {/* Connection Status Indicator */}
-            <div className="flex items-center space-x-1">
-              {isConnected ? (
-                <Wifi className="h-4 w-4 text-green-600" />
-              ) : (
-                <WifiOff className="h-4 w-4 text-red-600" />
+              {!session && hasGuestSession() && (
+                <button
+                  onClick={() => setCurrentPage('guestOrder')}
+                  className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  My Order
+                </button>
               )}
             </div>
-            
-            {session ? (
-              <>
-                {setCurrentPage && (
-                  <button
-                    onClick={() => setCurrentPage('profile')}
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center space-x-1"
-                  >
-                    <User className="h-6 w-6" />
-                    <span className="hidden sm:inline">Profile</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => setCurrentPage?.('cart')}
-                  className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <button 
-                  onClick={() => setModal('login')}
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  Login
-                </button>
-                <button 
-                  onClick={() => setModal('signup')}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                >
-                  Signup
-                </button>
-                <button
-                  onClick={() => setCurrentPage?.('cart')}
-                  className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-              </>
-            )}
-            {!session && hasGuestSession() && (
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
               <button
-                onClick={() => setCurrentPage('guestOrder')}
-                className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 px-3 py-2 rounded-md text-sm font-medium"
+                onClick={toggleTheme}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
+                aria-label="Toggle theme"
               >
-                My Order
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5 md:h-6 md:w-6" />
+                ) : (
+                  <Sun className="h-5 w-5 md:h-6 md:w-6" />
+                )}
               </button>
-            )}
+              {session && (
+                <button
+                  onClick={() => setCurrentPage('profile')}
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
+                >
+                  <User className="h-5 w-5 md:h-6 md:w-6" />
+                </button>
+              )}
+              <button
+                onClick={() => setCurrentPage?.('cart')}
+                className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cart.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -269,6 +304,39 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
               >
                 Contact
               </button>
+              {!session && hasGuestSession() && (
+                <button
+                  onClick={() => {
+                    setCurrentPage('guestOrder');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 block px-3 py-2 text-base font-medium transition-colors"
+                >
+                  My Order
+                </button>
+              )}
+              {!session && (
+                <>
+                  <button 
+                    onClick={() => {
+                      setModal('signup');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors"
+                  >
+                    Signup
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setModal('login');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors"
+                  >
+                    Login
+                  </button>
+                </>
+              )}
               {session && isAdmin && (
                 <button 
                   onClick={() => {
@@ -280,15 +348,12 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                   Admin
                 </button>
               )}
-              {!session && hasGuestSession() && (
-                <button
-                  onClick={() => {
-                    setCurrentPage('guestOrder');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 block px-3 py-2 text-base font-medium transition-colors"
+              {session && (
+                <button 
+                  onClick={handleLogout}
+                  className="bg-red-600 hover:bg-red-700 text-white block w-full text-left px-3 py-2 rounded-md text-base font-medium"
                 >
-                  My Order
+                  Logout
                 </button>
               )}
             </div>

@@ -11,42 +11,44 @@ function ProductCard({ product, onProductClick, addToCart, rating }: {
 }) {
   return (
     <div 
-      className="group bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full"
+      className="group bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full flex flex-col"
     >
-      <button onClick={() => onProductClick(product.id)} className="w-full">
-        <div className="relative">
+      <div className="relative aspect-w-1 aspect-h-1">
+        <button onClick={() => onProductClick(product.id)} className="w-full h-full">
           <img 
             src={product.image} 
             alt={product.name}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {product.badge && (
-            <span className={`absolute top-4 left-4 ${product.badgeColor} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
-              {product.badge}
-            </span>
+            <div className="absolute top-4 left-4">
+              <span className={`${product.badgeColor} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
+                {product.badge}
+              </span>
+            </div>
           )}
-        </div>
-        
-        <div className="p-6">
+        </button>
+      </div>
+      
+      <div className="p-6 flex-grow">
+        <button onClick={() => onProductClick(product.id)} className="w-full text-left">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
             {product.name}
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm leading-relaxed">
-            {product.description}
-          </p>
-          
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">Rs {product.price.toFixed(2)}</span>
-            <StarRating 
-              rating={rating?.averageRating || 0} 
-              readonly 
-              size="sm" 
-              showValue 
-              reviewCount={rating?.reviewCount || 0}
-            />
-          </div>
+        </button>
+        
+        
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-2xl font-bold text-gray-900 dark:text-white">Rs {product.price.toFixed(2)}</span>
+          <StarRating 
+            rating={rating?.averageRating || 0} 
+            readonly 
+            size="sm" 
+            showValue 
+            reviewCount={rating?.reviewCount || 0}
+          />
         </div>
-      </button>
+      </div>
       <div className="p-6 pt-0">
         <button 
           onClick={() => addToCart(product)}
@@ -123,7 +125,7 @@ export default function FeaturedProducts({ setCurrentPage, setSelectedProductId,
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
           {products && products.map((product) => (
             <ProductCard 
               key={product.id} 

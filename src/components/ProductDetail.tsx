@@ -109,11 +109,11 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
         </button>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden lg:flex">
-          <div className="lg:w-1/2">
+          <div className="lg:w-1/2 flex items-center justify-center p-4">
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-96 object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
           <div className="lg:w-1/2 p-8">

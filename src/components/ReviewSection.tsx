@@ -202,7 +202,7 @@ const ReviewItem: React.FC<{
 
   return (
     <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 last:border-b-0">
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex flex-wrap justify-between items-start mb-3">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
             <User className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -249,7 +249,7 @@ const ReviewItem: React.FC<{
           <p className="text-gray-500 dark:text-gray-400 italic">No comment provided</p>
         )}
         {review.owner_reply && review.owner_reply.trim() && (
-          <div className="mt-2 ml-12"> {/* Adjusted margin to align with comments */}
+          <div className="mt-2 ml-4 sm:ml-12"> {/* Adjusted margin to align with comments */}
             <p className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-1">
               <CornerDownRight className="h-6 w-6 text-gray-500 dark:text-gray-400" /> Supplier's Reply:
             </p> {/* Changed text and color */}
@@ -304,7 +304,7 @@ const ReviewItem: React.FC<{
             <img 
               src={review.image_url} 
               alt="Review image" 
-              className="mt-4 rounded-lg w-48 cursor-pointer" 
+              className="mt-4 rounded-lg max-w-full sm:w-48 h-auto cursor-pointer" 
               onClick={() => setIsModalOpen(true)}
             />
             {isModalOpen && (
@@ -394,10 +394,10 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
 
   return (
     <div className="mt-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Customer Reviews</h2>
         {reviewStats && (
-          <div className="text-right">
+          <div className="text-center sm:text-right mt-4 sm:mt-0 w-full sm:w-auto">
             <div className="flex items-center space-x-2">
               <StarRating 
                 rating={reviewStats.average_rating} 
@@ -436,27 +436,27 @@ export default function ReviewSection({ productId, userId }: ReviewSectionProps)
           )}
 
           {userReview && !showReviewForm && (
-            <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-              <div className="flex justify-between items-center">
-                <p className="text-blue-800 dark:text-blue-200">You have already reviewed this product.</p>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditReview}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    Edit Review
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDeleteReview}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Delete Review
-                  </Button>
-                </div>
+            <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-2 sm:p-4">
+              <div className="flex flex-wrap items-center justify-between w-full">
+                <p className="text-blue-800 dark:text-blue-200 mb-2 sm:mb-0 mr-4 min-w-0">You have already reviewed this product.</p>
+                  <div className="flex space-x-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditReview}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Edit Review
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteReview}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      Delete Review
+                    </Button>
+                  </div>
               </div>
             </div>
           )}

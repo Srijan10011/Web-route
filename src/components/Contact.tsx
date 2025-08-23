@@ -55,17 +55,32 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="relative min-h-[500px] flex items-center justify-center bg-cover bg-center bg-no-repeat"
-               style={{
-                 backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url("https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")'
-               }}>
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
-            Contact Us
-          </h1>
-          <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
-            We'd love to hear from you! Whether you have a question about our products, need assistance with an order, or just want to say hello, please don't hesitate to get in touch.
-          </p>
+      <section className="relative">
+        <picture>
+          <source
+            media="(min-width: 1280px)"
+            srcSet="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
+          />
+          <source
+            media="(min-width: 768px)"
+            srcSet="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=1280&h=720&dpr=1"
+          />
+          <img
+            src="https://images.pexels.com/photos/1367242/pexels-photo-1367242.jpeg?auto=compress&cs=tinysrgb&w=640&h=480&dpr=1"
+            alt="A lush green valley with a river running through it"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="relative z-10 min-h-[500px] flex items-center justify-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white dark:text-white mb-6 leading-tight">
+              Contact Us
+            </h1>
+            <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+              We'd love to hear from you! Whether you have a question about our products, need assistance with an order, or just want to say hello, please don't hesitate to get in touch.
+            </p>
+          </div>
         </div>
       </section>
 

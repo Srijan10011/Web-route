@@ -31,58 +31,30 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   // Get current user
   const [user, setUser] = useState<any>(null);
 
-  useEffect(() => {
-    async function getCurrentUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    }
-    getCurrentUser();
-  }, []);
-
-  // Use React Query for data fetching with automatic refetching
   const { 
     data: profile, 
     isLoading: profileLoading, 
-    error: profileError,
-    refetch: refetchProfile 
-  } = useProfileQuery(user?.id);
-
+    error: profileError 
+  } = useProfileQuery(session?.user?.id);
+  
   const { 
     data: addressData, 
     isLoading: addressLoading, 
-    error: addressError,
-    refetch: refetchAddress 
-  } = useUserAddressesQuery(user?.id);
+    error: addressError 
+  } = useUserAddressesQuery(session?.user?.id);
 
-  // Manual refetch functions
-  const handleRefetchProfile = async () => {
-    await refetchProfile();
-  };
-
-  const handleRefetchAddress = async () => {
-    await refetchAddress();
-  };
-
-  // Get email directly from user object like profile does
-  const userEmail = user?.email || '';
-
-  // Then in your useEffect, prioritize profile data but fall back to user data
   useEffect(() => {
-    if (profile) {
-      setFirstName(profile.first_name || '');
-      setLastName(profile.last_name || '');
-      setEmail(profile.email || '');
-    } else if (session?.user) {
-      // Fallback to session user data
-      setFirstName(session.user.user_metadata?.first_name || '');
-      setLastName(session.user.user_metadata?.last_name || '');
-      setEmail(session.user.email || '');
-    }
-  }, [profile, session]);
-
-  // Load guest contact info from localStorage if not authenticated
-  useEffect(() => {
-    if (!session) { // Only for guest users
+    if (session?.user) {
+      if (profile) {
+        setFirstName(profile.first_name || '');
+        setLastName(profile.last_name || '');
+        setEmail(profile.email || session.user.email || '');
+      } else {
+        setFirstName(session.user.user_metadata?.first_name || '');
+        setLastName(session.user.user_metadata?.last_name || '');
+        setEmail(session.user.email || '');
+      }
+    } else {
       const savedContactInfo = localStorage.getItem('guestContactInfo');
       if (savedContactInfo) {
         try {
@@ -93,50 +65,51 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           setPhone(parsedInfo.phone || '');
         } catch (e) {
           console.error("Error parsing guest contact info from localStorage", e);
-          // Clear invalid data to prevent future errors
           localStorage.removeItem('guestContactInfo');
         }
       }
     }
-  }, [session]); // Run when session changes
+  }, [session, profile]);
 
   useEffect(() => {
     if (addressData) {
-        setPhone(addressData.phone || '');
-        setAddress(addressData.address || '');
-        setCity(addressData.city || '');
-        setState(addressData.state || '');
-        // Removed automatic location pre-fill as per user request
-        // if (addressData.latitude && addressData.longitude) {
-        //   setLocation(`${addressData.latitude}, ${addressData.longitude}`);
-        // }
-      }
-    
+      setPhone(addressData.phone || '');
+      setAddress(addressData.address || '');
+      setCity(addressData.city || '');
+      setState(addressData.state || '');
+    }
   }, [addressData]);
 
   const getLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
-        },
-        (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              alert("You denied the request for Geolocation.");
-              break;
-            case error.POSITION_UNAVAILABLE:
-              alert("Location information is unavailable.");
-              break;
-            case error.TIMEOUT:
-              alert("The request to get user location timed out.");
-              break;
-            default:
-              alert("An unknown error occurred.");
-              break;
-          }
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
+            },
+            (error) => {
+              alert("Error getting location: " + error.message);
+            }
+          );
+        } else if (result.state === 'prompt') {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
+            },
+            (error) => {
+              if (error.code === error.PERMISSION_DENIED) {
+                // User denied the permission prompt
+                alert("You denied the request for Geolocation.");
+              } else {
+                alert("Error getting location: " + error.message);
+              }
+            }
+          );
+        } else if (result.state === 'denied') {
+          alert("You have denied Geolocation access. Please enable it in your browser settings.");
         }
-      );
+      });
     } else {
       alert("Geolocation is not supported by this browser.");
     }
@@ -145,47 +118,18 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handlePlaceOrder = async () => {
-    console.log('=== BUTTON CLICKED ===');
-    console.log('User state:', user);
-    console.log('Session state:', session);
-
     try {
-      console.log('=== ORDER PLACEMENT STARTED ===');
-      console.log('Cart items:', cart);
-      console.log('Form data:', { firstName, lastName, email, phone, address, city, state, location });
+      const currentUser = session?.user;
 
-      // Step 1: Get user (optional for guest checkout)
-      console.log('Step 1: Getting user...');
-      let currentUser = null; // Renamed to avoid conflict with outer scope 'user'
-      try {
-        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.log('User not authenticated, proceeding as guest checkout');
-        } else if (authUser) {
-          currentUser = authUser;
-          console.log('✓ User authenticated:', currentUser.id);
-        } else {
-          console.log('✓ User not authenticated, proceeding as guest.');
-        }
-      } catch (error) {
-        console.log('Authentication check failed, proceeding as guest checkout');
-      }
-
-      // Step 2: Validate location
-      console.log('Step 2: Validating location...');
       if (!location) {
         alert('Please click "Use my location" to proceed with the order.');
         return;
       }
-      console.log('✓ Location validated:', location);
 
-      // Step 3: Validate required fields
-      console.log('Step 3: Validating required fields...');
       if (!firstName || !lastName || !email || !phone || !address || !city || !state) {
         alert('Please fill in all required fields.');
         return;
       }
-      console.log('✓ All required fields validated');
 
       const shippingAddress = {
         firstName,
@@ -199,15 +143,12 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
         latitude: location ? parseFloat(location.split(', ')[0]) : null,
         longitude: location ? parseFloat(location.split(', ')[1]) : null,
       };
-      console.log('Shipping address prepared:', shippingAddress);
 
-      // Step 4: Save user address if user is authenticated
-      if (currentUser) { // Use currentUser here
-        console.log('Step 4: Saving user address...');
+      if (currentUser) {
         const { error: upsertError } = await supabase
           .from('user_addresses')
           .upsert({
-            user_id: currentUser.id, // Use currentUser.id here
+            user_id: currentUser.id,
             phone,
             address,
             city,
@@ -222,40 +163,17 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           alert(`Failed to save address: ${upsertError.message}`);
           return;
         }
-        console.log('✓ Address saved successfully');
       }
 
-      // Step 5: Prepare order data
-      console.log('Step 5: Preparing order data...');
-      const totalWithShipping = totalPrice + 5.99; // Calculate total with shipping
-      const cartItems = cart; // Assuming cart is already in the correct format
+      const totalWithShipping = totalPrice + 5.99;
+      const cartItems = cart;
 
-      // Define formData and coordinates to match the expected structure in the changes
-      const formData = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode: '', // Assuming zipCode is not captured in the form
-      };
-
-      const coordinates = location
-        ? {
-            lat: parseFloat(location.split(', ')[0]),
-            lng: parseFloat(location.split(', ')[1]),
-          }
-        : { lat: null, lng: null };
-
-      // Create order data (without customer info)
       const orderData: any = {
         order_number: `ORD-${Date.now()}`,
         total_amount: totalWithShipping.toFixed(2),
         status: 'pending',
         order_date: new Date().toISOString(),
-        user_id: currentUser?.id || null, // null for guest orders
+        user_id: currentUser?.id || null,
         items: cartItems.map(item => ({
           id: item.id,
           name: item.name,
@@ -264,35 +182,20 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
         })),
       };
 
-      // Prepare customer information
       const customerInfo = {
         customer_name: `${firstName} ${lastName}`.trim() || 'Guest',
         shipping_address: {
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          latitude: coordinates.lat,
-          longitude: coordinates.lng
+          phone: phone,
+          address: address,
+          city: city,
+          state: state,
+          zipCode: '',
+          latitude: shippingAddress.latitude,
+          longitude: shippingAddress.longitude
         }
       };
-      console.log('Order data prepared:', orderData);
 
-      // Step 6: Insert order
-      console.log('Step 6: Inserting order into database...');
-      console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
-
-      // First, let's validate the data before sending
-      if (!orderData.order_number || !orderData.total_amount) {
-        console.error('❌ Missing required fields:', orderData);
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      // Handle customer information based on user type
       if (currentUser) {
-        // Authenticated user - create customer_detail record
         const customerDetailData = {
           user_id: currentUser.id,
           ...customerInfo
@@ -310,61 +213,27 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           return;
         }
 
-        // Add customer_detail_id to order
         orderData.customer_detail_id = customerDetail.id;
-      } else {
-        // Guest user - create guest_order record after order is created
-        // We'll handle this after the order is inserted
-      }
+      } 
 
-      // Insert the order
       let { data, error } = await supabase
         .from('orders')
         .insert([orderData])
-        .select(); // Add .select() to return the inserted data
-
-      console.log('Insert response - data:', data);
-      console.log('Insert response - error:', error);
+        .select();
 
       if (error) {
         console.error('❌ Order insert failed:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         alert(`Failed to place order: ${error.message}`);
         return;
       }
 
-      // Check if data was returned
-      if (!data || !Array.isArray(data) || data.length === 0) {
+      if (!data || data.length === 0) {
         console.error('❌ Order insert succeeded but returned no data');
-        console.error('Data received:', data);
-
-        // Try to fetch the order to see if it was actually created
-        const { data: fetchedOrder, error: fetchError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('order_number', orderData.order_number)
-          .single();
-
-        if (fetchError || !fetchedOrder) {
-          console.error('❌ Order was not created in database');
-          alert('Failed to create order. Please try again.');
-          return;
-        } else {
-          console.log('✓ Order found in database:', fetchedOrder);
-          // Use the fetched order data
-          data = [fetchedOrder];
-        }
+        alert('Failed to create order. Please try again.');
+        return;
       }
 
-      console.log('✓ Order placed successfully:', data);
-
-      // Create guest_order record if this is a guest order
-      if (!currentUser && data && data.length > 0) {
+      if (!currentUser) {
         const guestOrderData = {
           order_id: data[0].id,
           customer_name: customerInfo.customer_name,
@@ -379,21 +248,15 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
 
         if (guestOrderError) {
           console.error('❌ Guest order details insert failed:', guestOrderError);
-          // Don't fail the entire order for this, just log it
-        } else {
-          console.log('✓ Guest order details created successfully');
         }
       }
 
-      // Invalidate user orders query to update Profile page immediately
       if (currentUser && typeof window !== 'undefined' && (window as any).queryClient) {
-        console.log('Invalidating user orders cache for user:', currentUser.id);
         (window as any).queryClient.invalidateQueries(['userOrders', currentUser.id]);
       }
 
-      // Create guest session if user is not authenticated
-      if (!currentUser) { // Use currentUser here
-        const guestSession: GuestSession = {
+      if (!currentUser) {
+        const guestSession = {
           orderId: data[0].id,
           orderNumber: orderData.order_number,
           customerEmail: email,
@@ -404,12 +267,10 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           }
         };
 
-        // Store multiple orders in localStorage
         const existingSessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
         existingSessions.push(guestSession);
         localStorage.setItem('guestSessions', JSON.stringify(existingSessions));
 
-        // Save guest contact info to localStorage
         const guestContactInfo = {
           firstName,
           lastName,
@@ -418,7 +279,6 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
         };
         localStorage.setItem('guestContactInfo', JSON.stringify(guestContactInfo));
 
-        // Show success message with session info
         alert(`Order placed successfully! Order #${orderData.order_number}. You can access your order details for the next 24 hours.`);
       } else {
         alert('Order placed successfully!');
@@ -429,7 +289,6 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
 
     } catch (error: any) {
       console.error('❌ UNEXPECTED ERROR:', error);
-      console.error('Error stack:', error.stack);
       alert(`An unexpected error occurred: ${error.message || 'Unknown error'}`);
     }
   };

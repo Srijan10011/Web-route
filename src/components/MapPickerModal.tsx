@@ -18,7 +18,7 @@ interface MapPickerModalProps {
 
 const MapPickerModal: React.FC<MapPickerModalProps> = ({ onClose, onLocationSelect }) => {
   const [position, setPosition] = useState<[number, number] | null>(null);
-  const defaultCenter: [number, number] = [27.7172, 85.3240]; // Default to Kathmandu, Nepal
+  const defaultCenter: [number, number] = [28.212908317665658, 83.97543380627648]; // Default to user-provided location
 
   // Get user's current location on mount
   useEffect(() => {

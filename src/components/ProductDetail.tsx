@@ -3,6 +3,7 @@ import { supabase, retryOperation } from '../lib/supabaseClient';
 import { useProductQuery } from '../lib/utils';
 import { Star, ShoppingCart, Heart, Share2, ArrowLeft, MapPin } from 'lucide-react';
 import ReviewSection from './ReviewSection';
+import { useSearchParams, Link } from 'react-router-dom';
 
 interface Product {
   id: number;
@@ -19,13 +20,13 @@ interface Product {
 
 
 interface ProductDetailProps {
-  productId: number | null;
-  setCurrentPage: (page: string) => void;
   addToCart: (product: any) => void;
   session?: any;
 }
 
-export default function ProductDetail({ productId, setCurrentPage, addToCart, session }: ProductDetailProps) {
+export default function ProductDetail({ addToCart, session }: ProductDetailProps) {
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('id');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +36,7 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
     isLoading: productLoading, 
     error: productError,
     refetch: refetchProduct 
-  } = useProductQuery(productId);
+  } = useProductQuery(productId ? parseInt(productId) : null);
 
   // Manual refetch function
   const handleRefetch = async () => {
@@ -87,12 +88,9 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <p className="text-gray-600 dark:text-gray-300 text-lg">Product not found</p>
-          <button
-            onClick={() => setCurrentPage('shop')}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mt-4"
-          >
+          <Link to="/shop" className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors mt-4">
             Back to Shop
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -101,12 +99,9 @@ export default function ProductDetail({ productId, setCurrentPage, addToCart, se
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <button
-          onClick={() => setCurrentPage('shop')}
-          className="mb-8 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400"
-        >
+        <Link to="/shop" className="mb-8 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-green-400">
           &larr; Back to Shop
-        </button>
+        </Link>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden lg:flex">
           <div className="lg:w-1/2 flex items-center justify-center p-4">

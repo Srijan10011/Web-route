@@ -51,8 +51,14 @@ const queryClient = new QueryClient({
 // Make queryClient available globally for cache invalidation
 (window as any).queryClient = queryClient;
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+import Success from './components/Success';
+import Failure from './components/Failure';
+
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+
+import Home from './pages/Home';
+
+const App = () => {
   const [modal, setModal] = useState<'login' | 'signup' | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -267,119 +273,32 @@ function App() {
     );
   }
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'about':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <About setCurrentPage={setCurrentPage} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'shop':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Shop setCurrentPage={setCurrentPage} setSelectedProductId={setSelectedProductId} addToCart={addToCart} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'contact':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Contact />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'track-order':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <TrackOrder />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'product-detail':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <ProductDetail productId={selectedProductId} setCurrentPage={setCurrentPage} addToCart={addToCart} session={session} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'profile':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Profile session={session} setCurrentPage={setCurrentPage} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'update-profile':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <UpdateProfile setCurrentPage={setCurrentPage} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'cart':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Cart cart={cart} setCurrentPage={setCurrentPage} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'checkout':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Checkout cart={cart} setCurrentPage={setCurrentPage} session={session} clearCart={clearCart} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'admin':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <AdminPage setCurrentPage={setCurrentPage} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'guestOrder':
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <GuestOrderAccess setCurrentPage={setCurrentPage} />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-      case 'home':
-      default:
-        return (
-          <div>
-            <Header currentPage={currentPage} setCurrentPage={setCurrentPage} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
-            <Hero setCurrentPage={setCurrentPage} setModal={setModal} session={session} />
-            <Features />
-            <FeaturedProducts setCurrentPage={setCurrentPage} setSelectedProductId={setSelectedProductId} addToCart={addToCart} />
-            <Testimonials />
-            <Newsletter />
-            <Footer setCurrentPage={setCurrentPage} />
-          </div>
-        );
-    }
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen">
-        {renderPage()}
-        {modal === 'login' && <Login setModal={setModal} />}
-        {modal === 'signup' && <Signup setModal={setModal} />}
-      </div>
+      <BrowserRouter>
+        <div className="min-h-screen">
+          <Header currentPage={window.location.pathname} setModal={setModal} session={session} cart={cart} theme={theme} toggleTheme={toggleTheme} />
+          <Routes>
+            <Route path="/" element={<Home setCurrentPage={() => {}} setSelectedProductId={setSelectedProductId} addToCart={addToCart} setModal={setModal} session={session} />} />
+            <Route path="/about" element={<About setCurrentPage={() => {}} />} />
+            <Route path="/shop" element={<Shop setCurrentPage={() => {}} setSelectedProductId={setSelectedProductId} addToCart={addToCart} />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/track-order" element={<TrackOrder />} />
+            <Route path="/product-detail" element={<ProductDetail productId={selectedProductId} setCurrentPage={() => {}} addToCart={addToCart} session={session} />} />
+            <Route path="/profile" element={<Profile session={session} setCurrentPage={() => {}} />} />
+            <Route path="/update-profile" element={<UpdateProfile setCurrentPage={() => {}} />} />
+            <Route path="/cart" element={<Cart cart={cart} setCurrentPage={() => {}} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
+            <Route path="/checkout" element={<Checkout cart={cart} setCurrentPage={() => {}} session={session} clearCart={clearCart} />} />
+            <Route path="/admin" element={<AdminPage setCurrentPage={() => {}} />} />
+            <Route path="/guestOrder" element={<GuestOrderAccess setCurrentPage={() => {}} />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/failure" element={<Failure />} />
+          </Routes>
+          <Footer setCurrentPage={() => {}} />
+          {modal === 'login' && <Login setModal={setModal} />}
+          {modal === 'signup' && <Signup setModal={setModal} />}
+        </div>
+      </BrowserRouter>
       <Toaster />
     </QueryClientProvider>
   );

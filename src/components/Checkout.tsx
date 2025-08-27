@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useProfileQuery, useUserAddressesQuery } from '../lib/utils';
 import MapPickerModal from './MapPickerModal';
+import PaymentGatewayDialog from './PaymentGatewayDialog';
+
 interface CheckoutProps {
   cart: any[];
   setCurrentPage: (page: string) => void;
@@ -28,6 +30,7 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   const [state, setState] = useState('');
   const [location, setLocation] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   // Get current user
   const [user, setUser] = useState<any>(null);
 
@@ -149,292 +152,73 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
   const handlePlaceOrder = async () => {
-    console.log('=== BUTTON CLICKED ===');
-    console.log('User state:', user);
-    console.log('Session state:', session);
+    // Step 1: Validate required fields
+    if (!firstName || !lastName || !email || !phone || !address || !city || !state) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    // Step 2: Validate location
+    if (!location) {
+      alert('Please click "Use my location" to proceed with the order.');
+      return;
+    }
+
+    console.log('Setting showPaymentDialog to true');
+    setShowPaymentDialog(true);
+  };
+
+  const handleEsewaPay = async () => {
+    const orderDetails = {
+      cart,
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      location,
+      totalPrice,
+      session,
+    };
+
+    localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
 
     try {
-      console.log('=== ORDER PLACEMENT STARTED ===');
-      console.log('Cart items:', cart);
-      console.log('Form data:', { firstName, lastName, email, phone, address, city, state, location });
+      const response = await fetch('http://localhost:3001/initiate-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: (totalPrice + 5.99).toFixed(2),
+          productId: 'EPAYTEST',
+          successUrl: 'http://localhost:3001/verify-payment',
+          failureUrl: 'http://localhost:3001/verify-payment',
+        }),
+      });
 
-      // Step 1: Get user (optional for guest checkout)
-      console.log('Step 1: Getting user...');
-      let currentUser = null; // Renamed to avoid conflict with outer scope 'user'
-      try {
-        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.log('User not authenticated, proceeding as guest checkout');
-        } else if (authUser) {
-          currentUser = authUser;
-          console.log('✓ User authenticated:', currentUser.id);
-        } else {
-          console.log('✓ User not authenticated, proceeding as guest.');
-        }
-      } catch (error) {
-        console.log('Authentication check failed, proceeding as guest checkout');
-      }
+      const data = await response.json();
 
-      // Step 2: Validate location
-      console.log('Step 2: Validating location...');
-      if (!location) {
-        alert('Please click "Use my location" to proceed with the order.');
-        return;
-      }
-      console.log('✓ Location validated:', location);
-
-      // Step 3: Validate required fields
-      console.log('Step 3: Validating required fields...');
-      if (!firstName || !lastName || !email || !phone || !address || !city || !state) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-      console.log('✓ All required fields validated');
-
-      const shippingAddress = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode: '',
-        latitude: location ? parseFloat(location.split(', ')[0]) : null,
-        longitude: location ? parseFloat(location.split(', ')[1]) : null,
-      };
-      console.log('Shipping address prepared:', shippingAddress);
-
-      // Step 4: Save user address if user is authenticated
-      if (currentUser) { // Use currentUser here
-        console.log('Step 4: Saving user address...');
-        const { error: upsertError } = await supabase
-          .from('user_addresses')
-          .upsert({
-            user_id: currentUser.id, // Use currentUser.id here
-            phone,
-            address,
-            city,
-            state,
-            zip_code: '',
-            latitude: shippingAddress.latitude,
-            longitude: shippingAddress.longitude,
-          }, { onConflict: 'user_id' });
-
-        if (upsertError) {
-          console.error('❌ Address save failed:', upsertError);
-          alert(`Failed to save address: ${upsertError.message}`);
-          return;
-        }
-        console.log('✓ Address saved successfully');
-      }
-
-      // Step 5: Prepare order data
-      console.log('Step 5: Preparing order data...');
-      const totalWithShipping = totalPrice + 5.99; // Calculate total with shipping
-      const cartItems = cart; // Assuming cart is already in the correct format
-
-      // Define formData and coordinates to match the expected structure in the changes
-      const formData = {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode: '', // Assuming zipCode is not captured in the form
-      };
-
-      const coordinates = location
-        ? {
-            lat: parseFloat(location.split(', ')[0]),
-            lng: parseFloat(location.split(', ')[1]),
-          }
-        : { lat: null, lng: null };
-
-      // Create order data (without customer info)
-      const orderData: any = {
-        order_number: `ORD-${Date.now()}`,
-        total_amount: totalWithShipping.toFixed(2),
-        status: 'pending',
-        order_date: new Date().toISOString(),
-        user_id: currentUser?.id || null, // null for guest orders
-        items: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      };
-
-      // Prepare customer information
-      const customerInfo = {
-        customer_name: `${firstName} ${lastName}`.trim() || 'Guest',
-        shipping_address: {
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode,
-          latitude: coordinates.lat,
-          longitude: coordinates.lng
-        }
-      };
-      console.log('Order data prepared:', orderData);
-
-      // Step 6: Insert order
-      console.log('Step 6: Inserting order into database...');
-      console.log('Order data being sent:', JSON.stringify(orderData, null, 2));
-
-      // First, let's validate the data before sending
-      if (!orderData.order_number || !orderData.total_amount) {
-        console.error('❌ Missing required fields:', orderData);
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      // Handle customer information based on user type
-      if (currentUser) {
-        // Authenticated user - create customer_detail record
-        const customerDetailData = {
-          user_id: currentUser.id,
-          ...customerInfo
-        };
-
-        const { data: customerDetail, error: customerError } = await supabase
-          .from('customer_detail')
-          .insert([customerDetailData])
-          .select()
-          .single();
-
-        if (customerError) {
-          console.error('❌ Customer detail insert failed:', customerError);
-          alert(`Failed to create customer details: ${customerError.message}`);
-          return;
-        }
-
-        // Add customer_detail_id to order
-        orderData.customer_detail_id = customerDetail.id;
+      if (data.payment_url) {
+        window.location.href = data.payment_url;
       } else {
-        // Guest user - create guest_order record after order is created
-        // We'll handle this after the order is inserted
+        alert('Failed to initiate payment');
       }
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      alert('Failed to initiate payment');
+    }
+  };
 
-      // Insert the order
-      let { data, error } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select(); // Add .select() to return the inserted data
-
-      console.log('Insert response - data:', data);
-      console.log('Insert response - error:', error);
-
-      if (error) {
-        console.error('❌ Order insert failed:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        alert(`Failed to place order: ${error.message}`);
-        return;
-      }
-
-      // Check if data was returned
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        console.error('❌ Order insert succeeded but returned no data');
-        console.error('Data received:', data);
-
-        // Try to fetch the order to see if it was actually created
-        const { data: fetchedOrder, error: fetchError } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('order_number', orderData.order_number)
-          .single();
-
-        if (fetchError || !fetchedOrder) {
-          console.error('❌ Order was not created in database');
-          alert('Failed to create order. Please try again.');
-          return;
-        } else {
-          console.log('✓ Order found in database:', fetchedOrder);
-          // Use the fetched order data
-          data = [fetchedOrder];
-        }
-      }
-
-      console.log('✓ Order placed successfully:', data);
-
-      // Create guest_order record if this is a guest order
-      if (!currentUser && data && data.length > 0) {
-        const guestOrderData = {
-          order_id: data[0].id,
-          customer_name: customerInfo.customer_name,
-          shipping_address: customerInfo.shipping_address,
-          customer_email: email,
-          created_at: new Date().toISOString()
-        };
-
-        const { error: guestOrderError } = await supabase
-          .from('guest_order')
-          .insert([guestOrderData]);
-
-        if (guestOrderError) {
-          console.error('❌ Guest order details insert failed:', guestOrderError);
-          // Don't fail the entire order for this, just log it
-        } else {
-          console.log('✓ Guest order details created successfully');
-        }
-      }
-
-      // Invalidate user orders query to update Profile page immediately
-      if (currentUser && typeof window !== 'undefined' && (window as any).queryClient) {
-        console.log('Invalidating user orders cache for user:', currentUser.id);
-        (window as any).queryClient.invalidateQueries(['userOrders', currentUser.id]);
-      }
-
-      // Create guest session if user is not authenticated
-      if (!currentUser) { // Use currentUser here
-        const guestSession: GuestSession = {
-          orderId: data[0].id,
-          orderNumber: orderData.order_number,
-          customerEmail: email,
-          customerName: `${firstName} ${lastName}`,
-          orderData: {
-            ...orderData,
-            id: data[0].id
-          }
-        };
-
-        // Store multiple orders in localStorage
-        const existingSessions = JSON.parse(localStorage.getItem('guestSessions') || '[]');
-        existingSessions.push(guestSession);
-        localStorage.setItem('guestSessions', JSON.stringify(existingSessions));
-
-        // Save guest contact info to localStorage
-        const guestContactInfo = {
-          firstName,
-          lastName,
-          email,
-          phone,
-        };
-        localStorage.setItem('guestContactInfo', JSON.stringify(guestContactInfo));
-
-        // Show success message with session info
-        alert(`Order placed successfully! Order #${orderData.order_number}. You can access your order details for the next 24 hours.`);
-      } else {
-        alert('Order placed successfully!');
-      }
-
-      await clearCart();
-      setCurrentPage('home');
-
-    } catch (error: any) {
-      console.error('❌ UNEXPECTED ERROR:', error);
-      console.error('Error stack:', error.stack);
-      alert(`An unexpected error occurred: ${error.message || 'Unknown error'}`);
+  const handleSelectGateway = (gateway: string) => {
+    setShowPaymentDialog(false);
+    if (gateway === 'esewa') {
+      handleEsewaPay();
+    } else if (gateway === 'khalti') {
+      // Handle Khalti payment
+      console.log('Khalti payment selected');
     }
   };
 
@@ -560,6 +344,12 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
           </div>
         </div>
       </div>
+      {showPaymentDialog && (
+        <PaymentGatewayDialog 
+          onClose={() => setShowPaymentDialog(false)} 
+          onSelectGateway={handleSelectGateway} 
+        />
+      )}
     </div>
   );
 }

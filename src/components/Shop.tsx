@@ -3,6 +3,7 @@ import { Search, Filter, X, RefreshCw } from 'lucide-react';
 import { useProductsQuery, useCategoriesQuery } from '../lib/utils';
 import { useProductsRatingsQuery } from '../lib/productRatingHooks';
 import StarRating from './ui/StarRating';
+import { Link } from 'react-router-dom';
 
 interface Product {
   id: number;
@@ -19,39 +20,32 @@ interface Product {
 }
 
 
-function ProductCard({ product, onProductClick, addToCart, rating }: { 
+function ProductCard({ product, addToCart, rating }: { 
   product: any; 
-  onProductClick: (id: number) => void; 
   addToCart: (product: any) => void;
   rating?: { averageRating: number; reviewCount: number };
 }) {
   return (
-    <div 
-      className="group bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full flex flex-col"
-    >
+    <Link to={`/product-detail?id=${product.id}`} className="group bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 text-left w-full flex flex-col">
       <div className="relative aspect-w-1 aspect-h-1">
-        <button onClick={() => onProductClick(product.id)} className="w-full h-full">
-          <img 
-            src={product.image} 
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          {product.badge && (
-            <div className="absolute top-2 left-2">
-              <span className={`${product.badgeColor} text-white px-2 py-1 rounded-full text-xs font-semibold`}>
-                {product.badge}
-              </span>
-            </div>
-          )}
-        </button>
+        <img 
+          src={product.image} 
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+        {product.badge && (
+          <div className="absolute top-2 left-2">
+            <span className={`${product.badgeColor} text-white px-2 py-1 rounded-full text-xs font-semibold`}>
+              {product.badge}
+            </span>
+          </div>
+        )}
       </div>
       
       <div className="p-2 sm:p-4 flex-grow">
-        <button onClick={() => onProductClick(product.id)} className="w-full text-left">
-          <h3 className="text-sm sm:text-xl font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-            {product.name}
-          </h3>
-        </button>
+        <h3 className="text-sm sm:text-xl font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+          {product.name}
+        </h3>
         
         <div className="flex items-center justify-between mb-2">
           <span className="text-base sm:text-2xl font-bold text-gray-900 dark:text-white">Rs {product.price.toFixed(2)}</span>
@@ -66,17 +60,17 @@ function ProductCard({ product, onProductClick, addToCart, rating }: {
       </div>
       <div className="p-2 sm:p-4 pt-0">
         <button 
-          onClick={() => addToCart(product)}
+          onClick={(e) => { e.preventDefault(); addToCart(product); }}
           className="w-full bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 rounded-lg font-semibold transition-colors transform hover:scale-105 text-xs sm:text-base"
         >
           Add to Cart
         </button>
       </div>
-    </div>
+    </Link>
   );
 }
 
-export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }: { setCurrentPage: (page: string) => void; setSelectedProductId: (id: number) => void; addToCart: (product: any) => void }) {
+export default function Shop({ addToCart }: { addToCart: (product: any) => void }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Use React Query for data fetching with automatic refetching
@@ -385,10 +379,6 @@ export default function Shop({ setCurrentPage, setSelectedProductId, addToCart }
                 key={product.id} 
                 product={product} 
                 rating={ratingsMap.get(product.id)}
-                onProductClick={(id) => {
-                  setSelectedProductId(id);
-                  setCurrentPage('product-detail');
-                }} 
                 addToCart={addToCart} 
               />
             ))}

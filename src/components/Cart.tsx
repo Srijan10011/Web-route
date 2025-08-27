@@ -1,27 +1,24 @@
 import React from 'react';
 import { X, Plus, Minus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface CartProps {
   cart: any[];
-  setCurrentPage: (page: string) => void;
   updateCartQuantity: (productId: number, quantity: number) => void;
   removeFromCart: (productId: number) => void;
   clearCart: () => void | Promise<void>;
 }
 
-export default function Cart({ cart, setCurrentPage, updateCartQuantity, removeFromCart, clearCart }: CartProps) {
+export default function Cart({ cart, updateCartQuantity, removeFromCart, clearCart }: CartProps) {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Your Cart is Empty</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">Looks like you haven't added anything to your cart yet.</p>
-          <button
-            onClick={() => setCurrentPage('shop')}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
+          <Link to="/shop" className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
             Continue Shopping
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -81,12 +78,12 @@ export default function Cart({ cart, setCurrentPage, updateCartQuantity, removeF
                 <p className="text-xl font-bold text-gray-900 dark:text-white">Npr.{totalPrice.toFixed(2)}</p>
               </div>
             </div>
-            <button onClick={() => setCurrentPage('checkout')} className="w-full mt-8 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold text-lg">
+            <Link to="/checkout" className="w-full mt-8 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold text-lg text-center block">
               Proceed to Checkout &rarr;
-            </button>
-            <button onClick={() => setCurrentPage('shop')} className="w-full mt-4 text-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200">
+            </Link>
+            <Link to="/shop" className="w-full mt-4 text-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 block">
               Continue Shopping
-            </button>
+            </Link>
           </div>
         </div>
       </div>

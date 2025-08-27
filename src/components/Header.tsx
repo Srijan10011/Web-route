@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, checkConnection } from '../lib/supabaseClient';
 import { useProfileQuery } from '../lib/utils';
+import { Link } from 'react-router-dom';
 
 import { ShoppingCart, User, Menu, X, Wifi, WifiOff, Leaf, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
   currentPage?: string;
-  setCurrentPage: (page: string) => void;
   setModal: (modal: 'login' | 'signup' | null) => void;
   session: any;
   cart: any[];
@@ -14,7 +14,7 @@ interface HeaderProps {
   toggleTheme: () => void;
 }
 
-export default function Header({ currentPage = 'home', setCurrentPage, setModal, session, cart, theme, toggleTheme }: HeaderProps) {
+export default function Header({ currentPage = 'home', setModal, session, cart, theme, toggleTheme }: HeaderProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -62,8 +62,7 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
     if (error) {
       console.error("Error logging out:", error.message);
     } else {
-      setCurrentPage('home');
-      window.scrollTo(0, 0);
+      window.location.href = '/';
     }
   };
 
@@ -82,48 +81,30 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <button 
-              onClick={() => setCurrentPage?.('home')}
-              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-            >
+            <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <Leaf className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
               <span className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">FreshShroom</span>
-            </button>
+            </Link>
           </div>
           
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <button 
-                onClick={() => setCurrentPage?.('home')}
-                className={`${currentPage === 'home' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}
-              >
+              <Link to="/" className={`${currentPage === '/' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}>
                 Home
-              </button>
-              <button 
-                onClick={() => setCurrentPage?.('shop')}
-                className={`${currentPage === 'shop' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/shop" className={`${currentPage === '/shop' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}>
                 Shop
-              </button>
-              <button 
-                onClick={() => setCurrentPage?.('about')}
-                className={`${currentPage === 'about' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/about" className={`${currentPage === '/about' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}>
                 About
-              </button>
-              <button 
-                onClick={() => setCurrentPage?.('contact')}
-                className={`${currentPage === 'contact' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/contact" className={`${currentPage === '/contact' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}>
                 Contact
-              </button>
+              </Link>
               {session && isAdmin && (
-                <button 
-                  onClick={() => setCurrentPage?.('admin')}
-                  className={`${currentPage === 'admin' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}
-                >
+                <Link to="/admin" className={`${currentPage === '/admin' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 px-3 py-2 text-sm font-medium transition-colors`}>
                   Admin
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -154,26 +135,18 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
               
               {session ? (
                 <>
-                  {setCurrentPage && (
-                    <button
-                      onClick={() => setCurrentPage('profile')}
-                      className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center space-x-1"
-                    >
-                      <User className="h-5 w-5 md:h-6 md:w-6" />
-                      <span className="hidden sm:inline">Profile</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setCurrentPage?.('cart')}
-                    className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
+                  <Link to="/profile" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center space-x-1">
+                    <User className="h-5 w-5 md:h-6 md:w-6" />
+                    <span className="hidden sm:inline">Profile</span>
+                  </Link>
+                  <Link to="/cart" className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
                     {cart.length > 0 && (
                       <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {cart.length}
                       </span>
                     )}
-                  </button>
+                  </Link>
                   <button 
                     onClick={handleLogout}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
@@ -195,26 +168,20 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                   >
                     Signup
                   </button>
-                  <button
-                    onClick={() => setCurrentPage?.('cart')}
-                    className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
+                  <Link to="/cart" className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
                     {cart.length > 0 && (
                       <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                         {cart.length}
                       </span>
                     )}
-                  </button>
+                  </Link>
                 </>
               )}
               {!session && hasGuestSession() && (
-                <button
-                  onClick={() => setCurrentPage('guestOrder')}
-                  className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 px-3 py-2 rounded-md text-sm font-medium"
-                >
+                <Link to="/guestOrder" className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 px-3 py-2 rounded-md text-sm font-medium">
                   My Order
-                </button>
+                </Link>
               )}
             </div>
 
@@ -232,27 +199,21 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                 )}
               </button>
               {session && (
-                <button
-                  onClick={() => setCurrentPage('profile')}
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
-                >
+                <Link to="/profile" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4">
                   <User className="h-5 w-5 md:h-6 md:w-6" />
-                </button>
+                </Link>
               )}
-              <button
-                onClick={() => setCurrentPage?.('cart')}
-                className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4"
-              >
+              <Link to="/cart" className="relative text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors mr-4">
                 <ShoppingCart className="h-6 w-6" />
                 {cart.length > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {cart.length}
                   </span>
                 )}
-              </button>
+              </Link>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900  dark:hover:text-white transition-colors"
               >
                 {isMobileMenuOpen ? (
                   <X className="h-5 w-5" />
@@ -268,52 +229,22 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-              <button 
-                onClick={() => {
-                  setCurrentPage?.('home');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`${currentPage === 'home' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}
-              >
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className={`${currentPage === '/' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}>
                 Home
-              </button>
-              <button 
-                onClick={() => {
-                  setCurrentPage?.('shop');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`${currentPage === 'shop' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className={`${currentPage === '/shop' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}>
                 Shop
-              </button>
-              <button 
-                onClick={() => {
-                  setCurrentPage?.('about');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`${currentPage === 'about' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className={`${currentPage === '/about' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}>
                 About
-              </button>
-              <button 
-                onClick={() => {
-                  setCurrentPage?.('contact');
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`${currentPage === 'contact' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}
-              >
+              </Link>
+              <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className={`${currentPage === '/contact' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}>
                 Contact
-              </button>
+              </Link>
               {!session && hasGuestSession() && (
-                <button
-                  onClick={() => {
-                    setCurrentPage('guestOrder');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 block px-3 py-2 text-base font-medium transition-colors"
-                >
+                <Link to="/guestOrder" onClick={() => setIsMobileMenuOpen(false)} className="text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 block px-3 py-2 text-base font-medium transition-colors">
                   My Order
-                </button>
+                </Link>
               )}
               {!session && (
                 <>
@@ -323,7 +254,7 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                       setIsMobileMenuOpen(false);
                     }}
                     className="text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors"
-                  >
+>
                     Signup
                   </button>
                   <button 
@@ -338,15 +269,9 @@ export default function Header({ currentPage = 'home', setCurrentPage, setModal,
                 </>
               )}
               {session && isAdmin && (
-                <button 
-                  onClick={() => {
-                    setCurrentPage?.('admin');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`${currentPage === 'admin' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}
-                >
+                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className={`${currentPage === '/admin' ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'} hover:text-green-700 dark:hover:text-green-500 block px-3 py-2 text-base font-medium transition-colors`}>
                   Admin
-                </button>
+                </Link>
               )}
               {session && (
                 <button 

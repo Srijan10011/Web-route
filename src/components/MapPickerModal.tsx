@@ -14,14 +14,14 @@ L.Icon.Default.mergeOptions({
 interface MapPickerModalProps {
   onClose: () => void;
   onLocationSelect: (lat: number, lng: number) => void;
+  initialLocation?: [number, number];
 }
 
-const MapPickerModal: React.FC<MapPickerModalProps> = ({ onClose, onLocationSelect }) => {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+const MapPickerModal: React.FC<MapPickerModalProps> = ({ onClose, onLocationSelect, initialLocation }) => {
+  const [position, setPosition] = useState<[number, number] | null>(initialLocation || null);
   const defaultCenter: [number, number] = [28.212908317665658, 83.97543380627648]; // Default to user-provided location
 
-  // Get user's current location on mount
-  useEffect(() => {
+  const handleUseMyLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -37,8 +37,16 @@ const MapPickerModal: React.FC<MapPickerModalProps> = ({ onClose, onLocationSele
     } else {
       // Fallback to default center if geolocation is not supported
       setPosition(defaultCenter);
+      alert("Geolocation is not supported by your browser.");
     }
-  }, []);
+  };
+
+  // Get user's current location on mount
+  useEffect(() => {
+    if (!initialLocation) {
+      handleUseMyLocation();
+    }
+  }, [initialLocation]);
 
   function LocationMarker() {
     useMapEvents({
@@ -57,6 +65,12 @@ const MapPickerModal: React.FC<MapPickerModalProps> = ({ onClose, onLocationSele
       <div className="bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Select Delivery Location</h2>
+          <button
+            onClick={handleUseMyLocation}
+            className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold text-sm"
+          >
+            Use my location
+          </button>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-3xl leading-none">&times;</button>
         </div>
         <div className="flex-grow relative" style={{ height: '400px' }}>

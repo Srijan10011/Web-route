@@ -2,12 +2,12 @@ import React from 'react';
 import { Session } from '@supabase/supabase-js';
 
 interface HeroProps {
-  setCurrentPage: (page: string) => void;
+  navigate: (path: string) => void;
   setModal: (modal: 'login' | 'signup' | null) => void;
   session: Session | null;
 }
 
-export default function Hero({ setCurrentPage, setModal, session }: HeroProps) {
+export default function Hero({ navigate, setModal, session }: HeroProps) {
   return (
     <section className="relative">
       <picture>
@@ -40,7 +40,7 @@ export default function Hero({ setCurrentPage, setModal, session }: HeroProps) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {session ? (
               <button
-                onClick={() => setCurrentPage('shop')}
+                onClick={() => navigate('shop')}
                 className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors transform hover:scale-105"
               >
                 Shop Now

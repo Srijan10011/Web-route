@@ -58,7 +58,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
 import Home from './pages/Home';
 
-const App = () => {
+  const App = () => {
   const [modal, setModal] = useState<'login' | 'signup' | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -294,7 +294,7 @@ const App = () => {
             <Route path="/success" element={<Success />} />
             <Route path="/failure" element={<Failure />} />
           </Routes>
-          <Footer setCurrentPage={() => {}} />
+          <Footer />
           {modal === 'login' && <Login setModal={setModal} />}
           {modal === 'signup' && <Signup setModal={setModal} />}
         </div>

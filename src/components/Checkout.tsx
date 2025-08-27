@@ -121,33 +121,7 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
     
   }, [addressData]);
 
-  const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
-        },
-        (error) => {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              alert("You denied the request for Geolocation. To use this feature, please enable location services for this site in your browser settings.");
-              break;
-            case error.POSITION_UNAVAILABLE:
-              alert("Location information is unavailable.");
-              break;
-            case error.TIMEOUT:
-              alert("The request to get user location timed out.");
-              break;
-            default:
-              alert("An unknown error occurred.");
-              break;
-          }
-        }
-      );
-    } else {
-      alert("Geolocation is not supported by this browser.");
-    }
-  };
+  
 
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
@@ -271,10 +245,7 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
                   <input type="text" className="mt-1 block w-full rounded-md border-black dark:border-gray-600 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-base p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" value={state} onChange={(e) => setState(e.target.value)} />
                 </div>
                 <div className="md:col-span-2 flex space-x-2">
-                  <button onClick={getLocation} className="w-1/2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 rounded-lg font-semibold text-sm">
-                    Use my location
-                  </button>
-                  <button onClick={() => setShowMapModal(true)} className="w-1/2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 rounded-lg font-semibold text-sm">
+                  <button onClick={() => setShowMapModal(true)} className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 rounded-lg font-semibold text-sm">
                     Pick Location on Map
                   </button>
                   {location && <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Your location: {location}</p>}
@@ -288,6 +259,7 @@ export default function Checkout({ cart, setCurrentPage, session, clearCart }: C
                           setLocation(`${lat}, ${lng}`);
                           setShowMapModal(false);
                         }}
+                        initialLocation={location ? location.split(',').map(Number) as [number, number] : undefined}
                       />
                     )}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 border border-gray-200 dark:border-gray-700">

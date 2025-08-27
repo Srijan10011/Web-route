@@ -1,11 +1,13 @@
 import React from 'react';
 import { Leaf, Facebook, Twitter, Instagram, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface FooterProps {
-  setCurrentPage: (page: string) => void;
+  // setCurrentPage: (page: string) => void; // No longer needed
 }
 
-export default function Footer({ setCurrentPage }: FooterProps) {
+export default function Footer({ /* setCurrentPage */ }: FooterProps) {
+  const navigate = useNavigate();
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -30,10 +32,10 @@ export default function Footer({ setCurrentPage }: FooterProps) {
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li><button onClick={() => setCurrentPage('home')} className="hover:text-white transition-colors">Home</button></li>
-              <li><button onClick={() => setCurrentPage('shop')} className="hover:text-white transition-colors">Shop</button></li>
-              <li><button onClick={() => setCurrentPage('about')} className="hover:text-white transition-colors">About</button></li>
-              <li><button onClick={() => setCurrentPage('contact')} className="hover:text-white transition-colors">Contact</button></li>
+              <li><button onClick={() => navigate('/')} className="hover:text-white transition-colors">Home</button></li>
+              <li><button onClick={() => navigate('/shop')} className="hover:text-white transition-colors">Shop</button></li>
+              <li><button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About</button></li>
+              <li><button onClick={() => navigate('/contact')} className="hover:text-white transition-colors">Contact</button></li>
               <li><a href="#" className="hover:text-white transition-colors">Growing Guide</a></li>
             </ul>
           </div>
@@ -45,7 +47,7 @@ export default function Footer({ setCurrentPage }: FooterProps) {
               <li><a href="#" className="hover:text-white transition-colors">Shipping Info</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Returns</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Customer Service</a></li>
-              <li><button onClick={() => setCurrentPage('track-order')} className="hover:text-white transition-colors">Track Order</button></li>
+              <li><button onClick={() => navigate('/track-order')} className="hover:text-white transition-colors">Track Order</button></li>
             </ul>
           </div>
         </div>
